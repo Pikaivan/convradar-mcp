@@ -1,0 +1,17 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Pikaivan/convradar-mcp",
+  "title": "ConvRadar",
+  "description": "GA4 conversion analyst inside Claude. Ask where your funnel is leaking, get numbers back.",
+  "repository": {
+    "url": "https://github.com/Pikaivan/convradar-mcp",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.convradar.com/mcp"
+    }
+  ]
+}
