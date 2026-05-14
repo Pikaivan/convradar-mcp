@@ -5,7 +5,7 @@ Hosted MCP server that turns your **Google Analytics 4** property into a convers
 - 🌐 **Website:** https://convradar.com
 - 💬 **Try without signup (3 free messages):** https://convradar.com/chat
 - 🔌 **MCP endpoint:** `https://mcp.convradar.com/mcp`
-- 📧 **Contact:** pikaivan@gmail.com
+- 📧 **Contact:** https://convradar.com
 
 > This repository is the public manifest for the hosted ConvRadar MCP server. The server itself is a managed service — there is no self-hosted binary. Use the configuration below to connect any MCP-compatible client to it.
 
@@ -114,13 +114,11 @@ GA4 Data API (read-only) · Claude/ChatGPT MCP · Stripe billing · OAuth 2.1.
 ## Status
 
 - MCP endpoint: production at `https://mcp.convradar.com/mcp`
-- Listed on: [mcp.so](https://mcp.so/server/convradar) (more coming)
 - Source: closed. This repository contains the public manifest, install instructions and tool catalogue only.
 
 ## Support
 
-- Email: pikaivan@gmail.com
-- Website: https://convradar.com
+Visit https://convradar.com to get in touch.
 
 ## License
 
