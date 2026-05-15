@@ -2,16 +2,35 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.Pikaivan/convradar-mcp",
   "title": "ConvRadar",
-  "description": "GA4 conversion analyst inside Claude. Ask where your funnel is leaking, get numbers back.",
+  "description": "Hosted MCP that turns your Google Analytics 4 property into a conversation. Ask where your funnel is leaking, whether mobile conversion dropped, or what to A/B test next — ConvRadar pulls the right slice from GA4, runs the diagnostic, and answers with numbers and a recommended action. 22 conversion-diagnostic tools, OAuth 2.1, no per-user URLs.",
+  "websiteUrl": "https://convradar.com",
+  "icons": [
+    {
+      "src": "https://convradar.com/icon.svg",
+      "mimeType": "image/svg+xml",
+      "sizes": ["any"]
+    }
+  ],
   "repository": {
     "url": "https://github.com/Pikaivan/convradar-mcp",
     "source": "github"
   },
-  "version": "1.0.0",
+  "version": "1.1.0",
   "remotes": [
     {
       "type": "streamable-http",
       "url": "https://mcp.convradar.com/mcp"
     }
-  ]
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "tagline": "GA4 conversion analyst inside Claude.",
+      "homepage": "https://convradar.com",
+      "documentation": "https://convradar.com/docs/mcp",
+      "demo": "https://convradar.com/chat",
+      "pricing": "https://convradar.com/pricing",
+      "categories": ["analytics", "marketing", "conversion-rate-optimization"],
+      "tags": ["ga4", "analytics", "conversion-rate", "cro", "funnel", "anomaly-detection", "oauth", "hosted-mcp"]
+    }
+  }
 }
