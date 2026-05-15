@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.Pikaivan/convradar-mcp",
   "title": "ConvRadar",
-  "description": "Hosted MCP that turns your Google Analytics 4 property into a conversation. Ask where your funnel is leaking, whether mobile conversion dropped, or what to A/B test next — ConvRadar pulls the right slice from GA4, runs the diagnostic, and answers with numbers and a recommended action. 22 conversion-diagnostic tools, OAuth 2.1, no per-user URLs.",
+  "description": "GA4 conversion analyst inside Claude — funnel drops, traffic anomalies, device gaps, with numbers.",
   "websiteUrl": "https://convradar.com",
   "icons": [
     {
