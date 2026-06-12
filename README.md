@@ -11,6 +11,17 @@ Hosted MCP server that turns your **Google Analytics 4** property into a convers
 
 ---
 
+## Screenshots
+
+Live output from the connector — funnel audit on the demo tenant in Claude.ai,
+traffic-quality verdict in ChatGPT. Full set with paired prompts in [`media/`](media/).
+
+![Funnel audit — executive summary and step table](media/02-claude-funnel-audit.png)
+
+![Ranked conversion leaks](media/03-claude-biggest-leak.png)
+
+![Traffic-quality verdict in ChatGPT](media/05-chatgpt-traffic-verdict.png)
+
 ## What ConvRadar does
 
 ConvRadar is a hosted Model Context Protocol (MCP) server. It connects to your Google Analytics 4 property over OAuth (read-only) and exposes ~20 conversion-diagnostic tools to any MCP client.
