@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://convradar.com/logo-512.png" alt="ConvRadar logo" width="120" height="120" />
+</p>
+
 # ConvRadar — Conversion Analyst inside Claude
 
 Hosted MCP server that turns your **Google Analytics 4** property into a conversation. Ask "where's my biggest funnel drop?" or "did mobile conversion drop last week?" in Claude, ChatGPT, Cursor or Cline — ConvRadar pulls the right slice, runs the diagnostic, and answers with numbers and a recommended action.
@@ -29,6 +33,18 @@ ConvRadar is a hosted Model Context Protocol (MCP) server. It connects to your G
 - Runs a **full audit on demand** — funnel drops, traffic-quality regressions, device gaps, landing-page leaks, product/category performance.
 - Compares **segments, periods and benchmarks**. Answers in plain English with GA4 numbers attached.
 - Records **hypotheses** so the next conversation picks up where the last one ended.
+
+## Works with any GA4 property
+
+ConvRadar isn't e-commerce-only. On connect it detects what kind of property you have and adapts the metrics, funnel and benchmarks to match — so the numbers make sense whether or not you sell anything on-site.
+
+- **E-commerce** — product and category performance, the add-to-cart → checkout → purchase funnel, revenue and AOV.
+- **SaaS** — sign-ups, trials and activation as the conversion funnel; engagement where there's no cart.
+- **Lead generation** — form submits, demo requests, contact and quote events mapped into a real lead funnel.
+- **Mobile & web apps** — app engagement, key-event completion and retention-shaped questions.
+- **Content, media and everything else** — engagement, read depth and whatever key events you've defined.
+
+If a property has no e-commerce tracking, ConvRadar won't hand you a misleading 0% conversion rate or $0 revenue. It leads with engagement and the key events you actually fire, and tells you when a metric isn't available instead of reporting a zero as fact.
 
 ## Try without installing
 
