@@ -41,7 +41,7 @@ ConvRadar is a hosted MCP server that connects to a user's Google Analytics 4 pr
 - **Runtime:** Python (Starlette + FastMCP), deployed on Render
 - **Data store:** Supabase (PostgreSQL) — GA4 fact tables, hypothesis library, user state
 - **Data source:** GA4 Data API (read-only, synced nightly by a background worker)
-- **Billing:** Stripe ($9.99/month flat, 7-day trial)
+- **Billing:** Free during open beta (subscription gate bypassed, no card). Post-beta: Stripe, $9.99/month flat with a 7-day trial.
 - **Auth:** OAuth 2.1 with PKCE (RS256 JWTs), legacy Supabase HS256 fallback, path-embedded connector tokens
 
 **Middleware chain (order matters):**
@@ -70,7 +70,7 @@ URL shape: `https://mcp.convradar.com/mcp/u_<token_id>` — the token is an auth
 - `write:hypotheses` — user-state write tools (when enabled)
 
 ### Subscription Gate
-The subscription check runs inside `resolve_context()` (not at the transport level) so the MCP connection succeeds and individual tool calls return a friendly text message telling the user how to fix their billing. `FREE_BETA=true` bypasses the status check (tenant must still exist).
+The subscription check runs inside `resolve_context()` (not at the transport level) so the MCP connection succeeds and individual tool calls return a friendly text message telling the user how to fix their billing. `FREE_BETA=true` bypasses the status check (tenant must still exist). During the current open beta, `FREE_BETA=true` is set in production, so the gate is bypassed and every tool is free.
 
 ### Discovery
 - `GET /.well-known/oauth-protected-resource` — RFC 9728 Protected Resource Metadata

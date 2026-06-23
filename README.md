@@ -116,7 +116,9 @@ The OAuth flow only requests read-only GA4 access — ConvRadar can never modify
 
 ## Pricing
 
-**$9.99 / month flat.** 7-day trial, card required at trial start, cancel anytime. No usage caps inside the plan.
+**Free right now — ConvRadar is in open beta.** No card, no trial countdown, no usage caps. Connect GA4 and use every tool.
+
+When the beta ends it becomes **$9.99 / month flat** (7-day free trial, cancel anytime, no usage caps). Beta users get advance notice before that kicks in.
 
 ## Stack
 
