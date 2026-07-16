@@ -17,30 +17,33 @@
 5. [Tools — Flexible Querying](#5-tools--flexible-querying)
 6. [Tools — Traffic Quality Assessment](#6-tools--traffic-quality-assessment)
 7. [Tools — Hypothesis Library (Tier 3)](#7-tools--hypothesis-library-tier-3)
-8. [Tools — Verification & Web Fetch](#8-tools--verification--web-fetch)
-9. [Tools — User-State Writes (Gated)](#9-tools--user-state-writes-gated)
-10. [Tools — Cross-Session Continuity](#10-tools--cross-session-continuity)
-11. [Tools — Full Audit (Golden First-Run)](#11-tools--full-audit-golden-first-run)
-12. [Prompts](#12-prompts)
-13. [Resources](#13-resources)
-14. [Diagnostic Engine Internals](#14-diagnostic-engine-internals)
-15. [Benchmark Data](#15-benchmark-data)
-16. [Hypothesis Matching Engine](#16-hypothesis-matching-engine)
-17. [Rate Limiting](#17-rate-limiting)
-18. [Audit Logging](#18-audit-logging)
-19. [Response Envelope](#19-response-envelope)
-20. [Operational Notes](#20-operational-notes)
+8. [Tools — Verification, Web Fetch & Visual Proof](#8-tools--verification-web-fetch--visual-proof)
+9. [Tools — Page Speed & UX Checks](#9-tools--page-speed--ux-checks)
+10. [Tools — User-State Writes (Gated)](#10-tools--user-state-writes-gated)
+11. [Tools — Cross-Session Continuity](#11-tools--cross-session-continuity)
+12. [Tools — Full Audit (Golden First-Run)](#12-tools--full-audit-golden-first-run)
+13. [Prompts](#13-prompts)
+14. [Resources](#14-resources)
+15. [Diagnostic Engine Internals](#15-diagnostic-engine-internals)
+16. [Benchmark Data](#16-benchmark-data)
+17. [Hypothesis Matching Engine](#17-hypothesis-matching-engine)
+18. [Rate Limiting](#18-rate-limiting)
+19. [Audit Logging](#19-audit-logging)
+20. [Response Envelope](#20-response-envelope)
+21. [Operational Notes](#21-operational-notes)
 
 ---
 
 ## 1. Architecture Overview
 
-ConvRadar is a hosted MCP server that connects to a user's Google Analytics 4 property (read-only) and exposes ~22 conversion-diagnostic tools to any MCP-compatible client (Claude, ChatGPT, Cursor, Cline, MCP Inspector).
+ConvRadar is a hosted MCP server that connects to a user's Google Analytics 4 property (read-only) and exposes 32 conversion-diagnostic tools to any MCP-compatible client (Claude, ChatGPT, Cursor, Cline, MCP Inspector).
 
 **Stack:**
 - **Runtime:** Python (Starlette + FastMCP), deployed on Render
 - **Data store:** Supabase (PostgreSQL) — GA4 fact tables, hypothesis library, user state
 - **Data source:** GA4 Data API (read-only, synced nightly by a background worker)
+- **Page speed:** Google PageSpeed Insights (Lighthouse lab data; CrUX field data when available)
+- **Visual proof:** anti-bot screenshot capture via a remote scraping browser, plus a vision-model page review
 - **Billing:** Free during open beta (subscription gate bypassed, no card). Post-beta: Stripe, $9.99/month flat with a 7-day trial.
 - **Auth:** OAuth 2.1 with PKCE (RS256 JWTs), legacy Supabase HS256 fallback, path-embedded connector tokens
 
@@ -82,7 +85,7 @@ The subscription check runs inside `resolve_context()` (not at the transport lev
 
 ## 3. Tools — Read-Only Analytics (Tier 1)
 
-All Tier 1 tools are always enabled, read-only, and return structured JSON inside the standard response envelope (see [Response Envelope](#19-response-envelope)).
+All Tier 1 tools are always enabled, read-only, and return structured JSON inside the standard response envelope (see [Response Envelope](#20-response-envelope)).
 
 ### `cr_get_account_info`
 
@@ -248,7 +251,7 @@ All Tier 1 tools are always enabled, read-only, and return structured JSON insid
 | `date_to` | string (ISO) | No | yesterday | End date |
 | `metrics` | list[string] | No | `["sessions", "purchases", "purchase_revenue"]` | Metrics to scan |
 
-**Algorithm:** 28-day rolling baseline with weekly seasonality adjustment. Z-score thresholds: `|z| ≥ 2.5` = notable, `|z| ≥ 3.5` = severe. Both spikes and drops are flagged. Minimum 7 baseline points required. See [Diagnostic Engine Internals](#14-diagnostic-engine-internals).
+**Algorithm:** 28-day rolling baseline with weekly seasonality adjustment. Z-score thresholds: `|z| ≥ 2.5` = notable, `|z| ≥ 3.5` = severe. Both spikes and drops are flagged. Minimum 7 baseline points required. See [Diagnostic Engine Internals](#15-diagnostic-engine-internals).
 
 **Returns:** List of `Anomaly` objects with `{date, metric, value, baseline_mean, baseline_std, z_score, severity, direction}`. Anomalies are grouped by metric.
 
@@ -288,7 +291,7 @@ All Tier 1 tools are always enabled, read-only, and return structured JSON insid
 |-----------|------|----------|---------|-------------|
 | `date_from` | string (ISO) | No | 30 days ago | Start date |
 | `date_to` | string (ISO) | No | yesterday | End date |
-| `vertical` | string | No | auto-detect | Industry vertical (see [Benchmark Data](#15-benchmark-data)) |
+| `vertical` | string | No | auto-detect | Industry vertical (see [Benchmark Data](#16-benchmark-data)) |
 | `metrics` | list[string] | No | all available | Which metrics to compare |
 
 **Returns:** For each metric: `{metric, value, p25, p50, p75, percentile_band, gap_to_median, relative_to_median, source}`.
@@ -447,7 +450,7 @@ If no results, returns `available_categories` so Claude can retry with a valid c
 
 ---
 
-## 8. Tools — Verification & Web Fetch
+## 8. Tools — Verification, Web Fetch & Visual Proof
 
 ### `cr_capture_via_web_fetch`
 
@@ -473,9 +476,89 @@ If no results, returns `available_categories` so Claude can retry with a valid c
 
 ---
 
-## 9. Tools — User-State Writes (Gated)
+### `cr_capture_screenshots`
 
-These tools are gated behind `MCP_ENABLE_WRITE_TOOLS=true` (default: off). They modify user state (hypotheses, change journal, verifications).
+**Purpose:** Capture real **desktop + mobile screenshots** of a page through an anti-bot remote browser so the model can *see* the page (above-the-fold content, mobile layout) before drawing conclusions — the visual companion to `cr_capture_via_web_fetch`, which only sees raw HTML.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `url` | string | **Yes** | — | Absolute URL of the problematic page (e.g. the PDP where add-to-cart drops, or the checkout step flagged by `cr_diagnose_funnel_drop`) |
+| `page_type` | string | No | — | Targets the element crop + observables: `homepage`, `pdp`, `cart`, `checkout_step`, `landing_page`, `category_page`, `off_site` |
+| `capture_set_id` | string | No | auto-resolved from `page_type` | Capture set (`CS-*`) whose observables define what to look for |
+| `force_refresh` | bool | No | `false` | Re-capture even if a fresh (<7 day) screenshot exists |
+
+**Behaviour:**
+1. **Cache-first:** a fresh (7-day TTL) screenshot for the URL is served immediately.
+2. **Inline path** (remote scraping browser): returns legible scroll-section images in the same call, plus a **signed URL of the real "before" screenshot** for use in before/after mockups.
+3. **Async path:** returns `{status: "capturing", request_id, retry_after_s: 30}` — poll `cr_get_screenshots(request_id)`.
+4. Every payload carries a **verdict contract**: for each observable the model must state observed / not-observed / unclear, say which section shows it, and quote the visual evidence — no visual claim without something to point to.
+5. Closing the loop: `cr_record_verification(method='screenshot', ...)` converts extracted observables into hypothesis verdicts; the user-facing deliverable is a before/after HTML artifact with numbered, tooltipped annotations.
+6. If capture is unconfigured or fails, the tool instructs the model to ask the user for a screenshot — and to never claim it has seen the page.
+
+---
+
+### `cr_get_screenshots`
+
+**Purpose:** Fetch the captured screenshots for a `request_id` returned by `cr_capture_screenshots`. Read-only.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `request_id` | string | **Yes** | ID from `cr_capture_screenshots` |
+
+**Statuses:** `capturing` (retry in ~15s) → `ready` (desktop + mobile + element-crop images, plus the observable checklist and verdict contract) → or `failed` (site is bot-protected; fall back to asking the user for a screenshot).
+
+---
+
+### `cr_list_capture_sets`
+
+**Purpose:** List the capture sets a page can be verified against — each with its `CS-*` id, target page type, and the exact observable keys to extract from a screenshot. Pick the matching set before `cr_record_verification`: `CS-landing-page` (lead-gen/landing), `CS-pdp-desktop` / `CS-pdp-mobile` (product page), `CS-cart`, `CS-checkout-flow`, `CS-homepage`. No parameters. Read-only.
+
+---
+
+## 9. Tools — Page Speed & UX Checks
+
+Both tools measure the **live public site**, so they are exempt from the data-import gate — they work for brand-new tenants whose GA4 backfill is still running, and for app-only properties (pass the marketing-site URL).
+
+### `cr_check_page_speed`
+
+**Purpose:** Measure a page's Core Web Vitals via Google PageSpeed Insights and join the result to the property's own GA4 conversion data.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `url` | string | No | property site root (derived from GA4 `page_location` data) | Absolute URL to measure |
+| `page_type` | string | No | — | Page role for context: `home`, `landing`, `category`, `pdp`, `cart`, `checkout`, `other` |
+
+**Behaviour:** cache-first (7-day freshness); on a miss, measures **mobile live** (~10–30s) and persists the snapshot; desktop is back-filled by a weekly job. Lab (Lighthouse) numbers by default; real-user (CrUX field) data is used and labeled when available — small sites usually have none, so a "lab" label is normal.
+
+**Returns:**
+- `mobile` — `perf_score` (0–100) + grade (`good` / `needs-improvement` / `poor`), `lcp_ms`, `cls`, `tbt_ms`, `inp_ms`, page weight (`total_bytes_kb`), `dom_elements`, `resource_summary`, `third_party_count`, and the `lcp_element` itself
+- `desktop` — score + LCP when already measured
+- `top_opportunities` — top-3 Lighthouse fixes with estimated savings
+- `conversion_cost` — when GA4 has enough data: the mobile-vs-desktop conversion gap and the monthly revenue (or conversions) slow mobile load likely contributes to
+- `observables_for_verification` — pre-shaped for `cr_record_verification`, so the page-speed hypothesis (`H-NAV-001`) can be recorded in one hop
+
+Requires `PAGESPEED_API_KEY` on the instance; otherwise returns `status: not_configured`.
+
+---
+
+### `cr_heuristic_check`
+
+**Purpose:** One-call **page speed + UX review with no GA4 required**: measures the page via PageSpeed Insights AND reads a mobile screenshot with a vision model against the conversion hypothesis library. Returns the speed grade, specific *hedged* "likely issues" (each with a grounded fix), and a free-form AI page review — all from the live page.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `url` | string | No | the property's main page | Absolute URL to check; an explicit URL always checks exactly one page. For app-only properties, pass the marketing/landing site URL |
+| `max_pages` | int | No | `1` | 1–3. Raise to also check the next most-visited / leakiest pages (each adds ~30–60s); ignored when `url` is given |
+
+**Page selection (when GA4 data exists):** pages are **traffic-ranked by lost sessions** (sessions × bounce), surfacing pages that are both popular *and* leaky; high-intent ecommerce pages the funnel resolves (PDP / cart / checkout) are kept. The response then also flags where the page actually leaks.
+
+**Honest-by-design contract:** measured speed is a fact; visual issues are hedged hypotheses behind a confidence gate; no revenue figure is invented without GA4 funnel data.
+
+---
+
+## 10. Tools — User-State Writes (Gated)
+
+These tools are gated behind `MCP_ENABLE_WRITE_TOOLS=true` (default: off). They modify user state (hypotheses, change journal, verifications) — never the GA4 property itself. **Currently enabled in production** during the open beta, so connected clients see the full 32-tool surface.
 
 ### `cr_record_verification`
 
@@ -556,7 +639,7 @@ These tools are gated behind `MCP_ENABLE_WRITE_TOOLS=true` (default: off). They 
 
 ---
 
-## 10. Tools — Cross-Session Continuity
+## 11. Tools — Cross-Session Continuity
 
 ### `cr_get_current_state`
 
@@ -577,7 +660,7 @@ These tools are gated behind `MCP_ENABLE_WRITE_TOOLS=true` (default: off). They 
 
 ---
 
-## 11. Tools — Full Audit (Golden First-Run)
+## 12. Tools — Full Audit (Golden First-Run)
 
 ### `cr_full_audit`
 
@@ -606,7 +689,7 @@ These tools are gated behind `MCP_ENABLE_WRITE_TOOLS=true` (default: off). They 
 
 ---
 
-## 12. Prompts
+## 13. Prompts
 
 MCP prompts are structured instruction templates that Claude reads to execute multi-step workflows. They reference tools but don't call them — Claude calls the tools based on the prompt's instructions.
 
@@ -665,7 +748,7 @@ MCP prompts are structured instruction templates that Claude reads to execute mu
 
 ---
 
-## 13. Resources
+## 14. Resources
 
 MCP resources are passive data sources that Claude can read. They use custom URI schemes.
 
@@ -683,7 +766,7 @@ MCP resources are passive data sources that Claude can read. They use custom URI
 
 ### `convradar://benchmarks/{vertical}`
 **Type:** Static benchmark data (JSON)
-**Content:** p25/p50/p75 percentiles for headline metrics in one vertical. See [Benchmark Data](#15-benchmark-data).
+**Content:** p25/p50/p75 percentiles for headline metrics in one vertical. See [Benchmark Data](#16-benchmark-data).
 
 ### `convradar://playbook/funnel-diagnosis`
 **Type:** Static methodology (Markdown)
@@ -695,7 +778,7 @@ MCP resources are passive data sources that Claude can read. They use custom URI
 
 ---
 
-## 14. Diagnostic Engine Internals
+## 15. Diagnostic Engine Internals
 
 ### Anomaly Detection (`diagnostic/anomaly.py`)
 
@@ -745,7 +828,7 @@ Finding:
 
 ---
 
-## 15. Benchmark Data
+## 16. Benchmark Data
 
 Hardcoded vertical benchmarks from public industry reports. Metrics: `conversion_rate`, `aov`, `bounce_rate`, `engagement_rate`.
 
@@ -763,7 +846,7 @@ Default vertical: `ecommerce_general`.
 
 ---
 
-## 16. Hypothesis Matching Engine
+## 17. Hypothesis Matching Engine
 
 ### How It Works
 
@@ -817,7 +900,7 @@ HypothesisMatch:
 
 ---
 
-## 17. Rate Limiting
+## 18. Rate Limiting
 
 Per-tenant, fixed-window rate limiting using Supabase counter rows.
 
@@ -832,7 +915,7 @@ When a limit is hit, the middleware returns HTTP 429 with a `Retry-After` header
 
 ---
 
-## 18. Audit Logging
+## 19. Audit Logging
 
 Every tool call is logged to `mcp_audit_log` via a SECURITY DEFINER RPC. Each row captures:
 - `tenant_id`, `property_id` — who
@@ -845,7 +928,7 @@ Toggle: `MCP_AUDIT_LOG_ENABLED=true` (default). 90-day retention enforced by nig
 
 ---
 
-## 19. Response Envelope
+## 20. Response Envelope
 
 All tools return a standardized JSON envelope:
 
@@ -869,7 +952,7 @@ Empty results use `empty_response()` which returns `{"summary": "...", "data": {
 
 ---
 
-## 20. Operational Notes
+## 21. Operational Notes
 
 ### Date Window Defaults
 - Default: last 30 days (yesterday inclusive)
@@ -894,6 +977,11 @@ GA4 data is synced nightly by a background worker into `ga4_fact_*` tables. The 
 | `MCP_RATE_LIMIT_PER_MINUTE` | Per-tenant rate limit (default: 60) |
 | `MCP_RATE_LIMIT_PER_DAY` | Per-tenant rate limit (default: 1000) |
 | `MCP_AUDIT_LOG_ENABLED` | Toggle audit logging (default: `true`) |
+| `PAGESPEED_API_KEY` | Google PageSpeed Insights key — enables `cr_check_page_speed` and the speed half of `cr_heuristic_check` |
+| `PAGESPEED_DAILY_BUDGET` | Daily cap on live PSI measurements |
+| `ANTHROPIC_API_KEY` / `HEURISTIC_VISION_MODEL` | Vision model behind the `cr_heuristic_check` AI page review |
+| `BRIGHTDATA_*` | Anti-bot screenshot capture (scraping browser / web unlocker) for `cr_capture_screenshots` |
+| `VISUAL_PROOF_FRESHNESS_DAYS` | Screenshot cache TTL in days (default: 7) |
 | `FREE_BETA` | Bypass subscription gate (default: unset = paid mode) |
 
 ### Cron Jobs
@@ -912,4 +1000,4 @@ The streamable HTTP transport rejects requests whose `Host` header isn't in the 
 
 ---
 
-*Last updated: 2026-05-21. Source: ConvRadar MCP server codebase analysis.*
+*Last updated: 2026-07-16. Source: ConvRadar MCP server codebase analysis.*
