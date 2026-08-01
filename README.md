@@ -50,6 +50,17 @@ If a property has no e-commerce tracking, ConvRadar won't hand you a misleading 
 
 Open the demo at **https://convradar.com/chat** — 3 free messages, no signup. The demo runs against a real GA4 property so the answers reflect real data.
 
+## Free tools on convradar.com
+
+The connector is the deep end. Four self-serve instruments on the site cover the shallow end — use them before (or without) connecting anything:
+
+| Tool | What it does | Access |
+|---|---|---|
+| [🩺 Page Scan](https://convradar.com/page-scan) | Paste any URL — three models read the page and rank the conversion leaks it's quietly losing, pinned to a screenshot. | No login |
+| [⚡ Page Speed & UX Check](https://convradar.com/page-speed) | Google PageSpeed score plus a conversion-UX read of the page, in about 30 seconds. | No login |
+| [🕹️ Benchmarks](https://convradar.com/benchmarks) | Conversion-rate ranges by industry — see where you land before chasing a number. | No login |
+| [🗣️ Voice of Customer](https://convradar.com/voice-of-customer) | Paste your URL — it mines independent customer discussion across your category (Reddit, Quora, niche forums & social threads; your brand's own reviews excluded), ranks the pains by frequency with verbatim quotes and their source links, then grades your page copy against each pain and hands you a prioritized fix list. ~3–5 min per run, report by email. | Free sign-up |
+
 ## Connect your client
 
 ConvRadar is a remote OAuth-protected MCP. Any stdio-only client (Claude Desktop, Cursor, Cline, Continue) can connect via `mcp-remote`, which handles the OAuth handshake on first run.
