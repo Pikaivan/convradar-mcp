@@ -28,7 +28,7 @@ traffic-quality verdict in ChatGPT. Full set with paired prompts in [`media/`](m
 
 ## What ConvRadar does
 
-ConvRadar is a hosted Model Context Protocol (MCP) server. It connects to your Google Analytics 4 property over OAuth (read-only) and exposes 32 conversion-diagnostic tools to any MCP client.
+ConvRadar is a hosted Model Context Protocol (MCP) server. It connects to your Google Analytics 4 property over OAuth (read-only) and exposes 35 conversion-diagnostic tools to any MCP client.
 
 - Runs a **full audit on demand** — funnel drops, traffic-quality regressions, device gaps, landing-page leaks, product/category performance.
 - Compares **segments, periods and benchmarks**. Answers in plain English with GA4 numbers attached.
@@ -123,6 +123,7 @@ ConvRadar exposes the following tools. The MCP client picks the right one for ea
 | `cr_get_hypothesis` | Read a stored hypothesis by ID. |
 | `cr_check_page_speed` | Core Web Vitals via PageSpeed Insights, tied to your GA4 mobile-vs-desktop conversion gap. |
 | `cr_heuristic_check` | Page speed + AI UX review of the live page — works before GA4 has any data. |
+| `cr_get_heuristic_check` | Fetch a heuristic check result by request id (pending until the background run finishes). |
 | `cr_capture_screenshots` | Real desktop + mobile screenshots of a page via an anti-bot browser (visual proof). |
 | `cr_get_screenshots` | Fetch a queued screenshot capture by request id. |
 | `cr_list_capture_sets` | What to look for on each page type before recording a verification. |
@@ -130,6 +131,8 @@ ConvRadar exposes the following tools. The MCP client picks the right one for ea
 | `cr_mark_hypothesis_status` | Track a hypothesis: surfaced → testing → confirmed / rejected. |
 | `cr_save_ai_suggested` | Save an AI-suggested hypothesis alongside the verified library. |
 | `cr_log_change` | Journal a shipped site change for later impact measurement. |
+| `cr_list_changes` | The change diary: what shipped and when, with impact verdicts where measured. |
+| `cr_update_change` | Edit or dismiss a diary entry — dismissed rows are retained, never deleted. |
 | `cr_verify_change_impact` | Pre/post statistical verdict for a logged change. |
 
 ## First prompts to try
