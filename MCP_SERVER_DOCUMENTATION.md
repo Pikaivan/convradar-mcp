@@ -129,10 +129,12 @@ All Tier 1 tools are always enabled, read-only, and return structured JSON insid
 |-----------|------|----------|---------|-------------|
 | `date_from` | string (ISO) | No | 30 days ago | Start date |
 | `date_to` | string (ISO) | No | yesterday | End date |
-| `top_n` | int | No | 10 | Max sources to return (1–50) |
-| `sort_by` | string | No | `"sessions"` | Sort column: sessions, purchases, purchase_revenue, conversion_rate |
+| `top_n` | int | No | 10 | Max sources to return (1–25) |
+| `sort_by` | string | No | `"revenue"` | One of: `revenue`, `sessions`, `conversions`, `conversion_rate`. An unrecognised value ranks by the default and says so in `notes` |
 
-**Returns:** List of `{session_source, session_medium, sessions, engaged_sessions, purchases, purchase_revenue, conversion_rate, bounce_rate, ...}` with prior-period deltas.
+**Returns:** `{items, unattributed_segments, sort_by, top_n}`. Each item is `{source, medium, sessions, users, purchases, revenue, conversion_rate, unattributed, users_exceed_sessions}`.
+
+Sources whose source/medium is blank or `(not set)` are held **out** of the ranked list — they are never presented as a "#N revenue driver" — and returned intact under `unattributed_segments`; their conversion rate is unreliable because attribution was lost. `users_exceed_sessions` flags a row reporting more users than sessions, which is physically impossible for a real source and marks an attribution artifact.
 
 ---
 
@@ -145,7 +147,7 @@ All Tier 1 tools are always enabled, read-only, and return structured JSON insid
 | `date_from` | string (ISO) | No | 30 days ago | Start date |
 | `date_to` | string (ISO) | No | yesterday | End date |
 
-**Returns:** Rows for `mobile`, `desktop`, `tablet` (and `smart tv` if present) with sessions, purchases, conversion_rate, bounce_rate, engagement_rate, avg_session_duration, share of total. Prior-period deltas included.
+**Returns:** `{items, total_sessions}`, one item per device — `{device, sessions, session_share, purchases, revenue, conversion_rate, engagement_rate}` — covering `mobile`, `desktop`, `tablet` and `smart tv` when present.
 
 ---
 
@@ -157,10 +159,10 @@ All Tier 1 tools are always enabled, read-only, and return structured JSON insid
 |-----------|------|----------|---------|-------------|
 | `date_from` | string (ISO) | No | 30 days ago | Start date |
 | `date_to` | string (ISO) | No | yesterday | End date |
-| `top_n` | int | No | 10 | Max pages to return (1–50) |
-| `sort_by` | string | No | `"sessions"` | Sort column |
+| `top_n` | int | No | 10 | Max pages to return (1–25) |
+| `sort_by` | string | No | `"sessions"` | One of: `sessions`, `revenue`, `conversions`, `conversion_rate`, `bounce_rate` (bounce ranks worst-first). An unrecognised value ranks by the default and says so in `notes` |
 
-**Returns:** List of `{landing_page, sessions, purchases, purchase_revenue, conversion_rate, bounce_rate, engagement_rate, avg_session_duration}` with prior-period deltas.
+**Returns:** `{items, sort_by, top_n}`. Each item is `{landing_page, sessions, purchases, revenue, conversion_rate, bounce_rate, avg_session_duration, engagement_rate, unattributed}`. Pages that are blank or `(not set)` carry `unattributed: true` — their conversion rate is unreliable because page attribution is missing. `bounce_rate` and `avg_session_duration` come back `null`, not `0`, when the source data has none.
 
 ---
 
@@ -187,10 +189,10 @@ All Tier 1 tools are always enabled, read-only, and return structured JSON insid
 |-----------|------|----------|---------|-------------|
 | `date_from` | string (ISO) | No | 30 days ago | Start date |
 | `date_to` | string (ISO) | No | yesterday | End date |
-| `top_n` | int | No | 10 | Max countries to return (1–50) |
-| `sort_by` | string | No | `"sessions"` | Sort column |
+| `top_n` | int | No | 10 | Max countries to return (1–25) |
+| `sort_by` | string | No | `"sessions"` | One of: `sessions`, `revenue`, `conversions`, `conversion_rate`. An unrecognised value ranks by the default and says so in `notes` |
 
-**Returns:** List of `{country, sessions, purchases, purchase_revenue, conversion_rate, bounce_rate}` with prior-period deltas.
+**Returns:** `{items, sort_by, top_n}`. Each item is `{country, sessions, purchases, revenue, conversion_rate, engagement_rate}`.
 
 ---
 
@@ -202,11 +204,13 @@ All Tier 1 tools are always enabled, read-only, and return structured JSON insid
 |-----------|------|----------|---------|-------------|
 | `date_from` | string (ISO) | No | 30 days ago | Start date |
 | `date_to` | string (ISO) | No | yesterday | End date |
-| `top_n` | int | No | 10 | Max products to return (1–50) |
-| `sort_by` | string | No | `"item_views"` | Sort column |
+| `top_n` | int | No | 10 | Max products to return (1–25) |
+| `sort_by` | string | No | `"revenue"` | One of: `revenue`, `views`, `add_to_carts`, `purchases`, `cart_to_view_rate`, `purchase_to_view_rate`. An unrecognised value ranks by the default and says so in `notes` |
 | `category` | string | No | all | Filter by product category |
 
-**Returns:** List of `{item_name, item_id, item_category, item_views, add_to_carts, purchases, item_revenue, view_to_cart_rate, cart_to_purchase_rate}` with prior-period deltas.
+**Returns:** `{items, sort_by, top_n}`. Each item is `{item_id, item_name, item_brand, item_category, items_viewed, items_added_to_cart, items_purchased, revenue, cart_to_view_rate, purchase_to_view_rate}`.
+
+Item rows carry no session count, so there is no `sessions` sort and no session-based conversion rate here — `cart_to_view_rate` and `purchase_to_view_rate` are the per-item equivalents.
 
 ---
 
@@ -216,13 +220,17 @@ All Tier 1 tools are always enabled, read-only, and return structured JSON insid
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `dimension` | string | **Yes** | — | Dimension to split on: `device_category`, `country`, `session_source_medium`, `landing_page` |
-| `value_a` | string | **Yes** | — | First segment value (e.g. `"mobile"`) |
-| `value_b` | string | **Yes** | — | Second segment value (e.g. `"desktop"`) |
+| `dimension` | string | No | `"device"` | One of: `device`, `source`, `country`, `new_vs_returning` |
+| `value_a` | string | No | `"mobile"` | First segment value (e.g. `"mobile"`, or `"google / organic"` when dimension is `source`) |
+| `value_b` | string | No | `"desktop"` | Second segment value |
 | `date_from` | string (ISO) | No | 30 days ago | Start date |
 | `date_to` | string (ISO) | No | yesterday | End date |
 
-**Returns:** Two rows (one per segment) with all available metrics. Difference and percentage-difference computed for each metric.
+Values are case-insensitive for `device` and `new_vs_returning`; for `source`, pass the `"google / organic"` syntax. An unsupported `dimension` returns a plain-language error listing the four that work. Use the parameter names exactly as spelled — an argument the schema does not declare is dropped, and the call runs on the defaults (`mobile` vs `desktop`), which the summary then names.
+
+**Returns:** `{dimension, segment_a, segment_b, deltas, significance}`. Each segment carries `{value, sessions, engaged_sessions, users, purchases, revenue, conversion_rate, aov}`.
+
+`significance` is a two-proportion z-test on the conversion-rate gap: `{z_score, p_value, diff_pp, ci95_low_pp, ci95_high_pp, significant, low_power}`. Read the verdict off this block rather than recomputing it. When the gap is not significant the summary says so outright instead of asserting a difference, and `low_power: true` means too few purchases to trust either way.
 
 ---
 
@@ -232,10 +240,12 @@ All Tier 1 tools are always enabled, read-only, and return structured JSON insid
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `top_n` | int | No | 5 | Number of products to analyze |
-| `status` | string | No | `"all"` | Filter: `"underperforming"`, `"overperforming"`, `"all"` |
+| `top_n` | int | No | 10 | Max products to return (1–25) |
+| `status` | string | No | all | Filter to one classification: `underperforming`, `watchlist`, `healthy`, `no_purchases`, `low_data`, `non_product` |
 
-**Returns:** List of products with `{item_name, diagnosis, view_to_cart_rate, cart_to_purchase_rate, revenue_share, category_avg_view_to_cart, gap_vs_category}`.
+**Returns:** `{groups, totals, top_products, status_filter, top_n}`. `groups` buckets the catalogue by status (`healthy`, `watchlist`, `no_purchases`, `low_data`, `non_product`); `totals` carries `{total_products, analyzable_products, low_confidence_count, total_weekly_opportunity, most_common_broken_step, most_common_broken_step_count}`; each entry in `top_products` carries `{item_id, item_name, item_brand, item_category, status, reason, traffic_tier, price_band, items_viewed, items_added_to_cart, items_purchased, item_revenue, view_to_cart, cart_to_purchase, view_to_purchase, broken_funnel_step, broken_step_actual, broken_step_benchmark, priority_score, potential_revenue_weekly, opportunity_confidence, opportunity_capped, opportunity_label, consecutive_decline, trend_drop_pct}`.
+
+`potential_revenue_weekly` is a labelled ceiling, not a forecast: it assumes each underperforming SKU's broken step reaches its category median.
 
 ---
 
@@ -418,13 +428,15 @@ Each finding includes hypothesis matches.
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `category` | string | No | all | CRO category (e.g. `"pdp_information"`, `"checkout_friction"`, `"trust_signals"`, `"mobile_checkout"`) |
+| `category` | string | No | all | CRO category (e.g. `"pdp_information"`, `"checkout_friction"`, `"pdp_trust"`, `"mobile_checkout_ux"`) |
 | `vertical` | string | No | auto-detect | Industry vertical filter |
-| `top_n` | int | No | 10 | Max hypotheses to return |
+| `top_n` | int | No | 10 | Max hypotheses to return (1–25) |
 
-**Returns:** List of `{id, title, category, description, applicable_verticals, capture_set_id, expected_impact}`.
+**Returns:** `{hypotheses: [{id, title, category, description, applicable_verticals, capture_set_id, expected_impact}]}`.
 
-If no results, returns `available_categories` so Claude can retry with a valid category name.
+`top_n` limits the **filtered** result, not the rows scanned, so it never understates how much of the library applies to you. The summary reads `Showing X of Y hypotheses applicable to vertical '<v>'` whenever more match than fit, `meta.total_matching` carries the true total, and `meta.result_count` always equals the number of rows actually returned — if the response byte cap trims the list, the count is restated from what survived.
+
+If no results, returns `available_categories` so the client can retry with a valid category name.
 
 ---
 
@@ -548,7 +560,16 @@ Requires `PAGESPEED_API_KEY` on the instance; otherwise returns `status: not_con
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `url` | string | No | the property's main page | Absolute URL to check; an explicit URL always checks exactly one page. For app-only properties, pass the marketing/landing site URL |
-| `max_pages` | int | No | `1` | 1–3. Raise to also check the next most-visited / leakiest pages (each adds ~30–60s); ignored when `url` is given |
+| `max_pages` | int | No | `1` | 1–3. Raise to also check the next most-visited / leakiest pages; ignored when `url` is given |
+
+**This tool is asynchronous — the first response is not the report.** The full check (PageSpeed measurement + screenshot + vision read) takes roughly 2–3 minutes, so the call returns in about two seconds with an acknowledgement:
+
+```json
+{"status": "checking", "request_id": "…", "slug": "ps-…",
+ "report_url": "https://convradar.com/page-speed/r/ps-…", "retry_after_s": 20}
+```
+
+Wait `retry_after_s`, then poll `cr_get_heuristic_check(request_id)` every ~15s until `status` is `complete`. **A client that treats the acknowledgement as the answer will report a working tool as broken.** Two responses skip the wait: a recent identical check returns its full report inline, and an app-only or invalid URL returns a not-applicable answer immediately.
 
 **Page selection (when GA4 data exists):** pages are **traffic-ranked by lost sessions** (sessions × bounce), surfacing pages that are both popular *and* leaky; high-intent ecommerce pages the funnel resolves (PDP / cart / checkout) are kept. The response then also flags where the page actually leaks.
 
@@ -556,9 +577,21 @@ Requires `PAGESPEED_API_KEY` on the instance; otherwise returns `status: not_con
 
 ---
 
+### `cr_get_heuristic_check`
+
+**Purpose:** Fetch the report for a `request_id` returned by `cr_heuristic_check`. Read-only.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `request_id` | string | **Yes** | ID from `cr_heuristic_check` |
+
+**Statuses:** `checking` (retry in ~15s) → `complete` → or `failed`. A completed report carries the top-line verdict, the ranked `fix_order` with an effort label per fix, per-page measured speed (`perf_score`, `lcp_s`, `cls`, `tbt_ms`, resource weights and request counts, with `data_source` naming field vs lab), the hedged "likely issues" with grounded fixes, the free-form AI page review, the mobile-vs-desktop conversion-cost ceiling where GA4 supports one, and a shareable `report_url` the user can reopen any time.
+
+---
+
 ## 10. Tools — User-State Writes (Gated)
 
-These tools are gated behind `MCP_ENABLE_WRITE_TOOLS=true` (default: off). They modify user state (hypotheses, change journal, verifications) — never the GA4 property itself. **Currently enabled in production** during the open beta, so connected clients see the full 32-tool surface.
+These tools are gated behind `MCP_ENABLE_WRITE_TOOLS=true` (default: off). They modify user state (hypotheses, change journal, verifications) — never the GA4 property itself. **Currently enabled in production** during the open beta, so connected clients see the full 35-tool surface.
 
 ### `cr_record_verification`
 

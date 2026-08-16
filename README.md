@@ -119,8 +119,8 @@ ConvRadar exposes the following tools. The MCP client picks the right one for ea
 | `cr_compare_to_benchmark` | Compare a metric to industry or cohort benchmark. |
 | `cr_find_conversion_anomalies` | Statistically significant conversion anomalies. |
 | `cr_capture_via_web_fetch` | Capture supporting evidence from a public URL. |
-| `cr_list_hypotheses` | List stored hypotheses for the account. |
-| `cr_get_hypothesis` | Read a stored hypothesis by ID. |
+| `cr_list_hypotheses` | Browse the CRO hypothesis library, filtered to your industry vertical. |
+| `cr_get_hypothesis` | Full detail for one hypothesis by ID, with what to look for on the page. |
 | `cr_check_page_speed` | Core Web Vitals via PageSpeed Insights, tied to your GA4 mobile-vs-desktop conversion gap. |
 | `cr_heuristic_check` | Page speed + AI UX review of the live page — works before GA4 has any data. |
 | `cr_get_heuristic_check` | Fetch a heuristic check result by request id (pending until the background run finishes). |

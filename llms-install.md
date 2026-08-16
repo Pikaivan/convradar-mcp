@@ -56,7 +56,7 @@ also try *"Where's my biggest funnel drop?"*.
 - Do **not** add any token or per-user URL to the config. The public endpoint is
   `https://mcp.convradar.com/mcp`; OAuth is automatic via `mcp-remote`.
 - Network access to `mcp.convradar.com` and `registry.npmjs.org` (for `npx`) is required.
-- 32 GA4 conversion-diagnostic tools are exposed (read-only analytics plus opt-in user-state tools) (full catalogue in [`README.md`](./README.md)).
+- 35 GA4 conversion-diagnostic tools are exposed (read-only analytics plus opt-in user-state tools) (full catalogue in [`README.md`](./README.md)).
   The OAuth grant is read-only — ConvRadar can never modify your analytics data.
 
 ## Troubleshooting
