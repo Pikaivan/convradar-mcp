@@ -7,7 +7,7 @@
 Hosted MCP server that turns your **Google Analytics 4** property into a conversation. Ask "where's my biggest funnel drop?" or "did mobile conversion drop last week?" in Claude, ChatGPT, Cursor or Cline — ConvRadar pulls the right slice, runs the diagnostic, and answers with numbers and a recommended action.
 
 - 🌐 **Website:** https://convradar.com
-- 💬 **Try without signup (3 free messages):** https://convradar.com/chat
+- 💬 **Chat with your GA4 in the browser:** https://convradar.com/chat (email sign-in, free during the beta)
 - 🔌 **MCP endpoint:** `https://mcp.convradar.com/mcp`
 - 📧 **Contact:** https://convradar.com
 
@@ -48,16 +48,17 @@ If a property has no e-commerce tracking, ConvRadar won't hand you a misleading 
 
 ## Try without installing
 
-Open the demo at **https://convradar.com/chat** — 3 free messages, no signup. The demo runs against a real GA4 property so the answers reflect real data.
+Sign in at **https://convradar.com/chat** with an email link or Google, connect GA4 and ask the same questions in the browser. Free during the open beta, no card. Page Scan, Page Speed and Benchmarks below need no login at all.
 
 ## Free tools on convradar.com
 
-The connector is the deep end. Four self-serve instruments on the site cover the shallow end — use them before (or without) connecting anything:
+The connector is the deep end. Five instruments on the site cover the shallow end, and three of them run without an account:
 
 | Tool | What it does | Access |
 |---|---|---|
-| [🩺 Page Scan](https://convradar.com/page-scan) | Paste any URL — three models read the page and rank the conversion leaks it's quietly losing, pinned to a screenshot. | No login |
-| [⚡ Page Speed & UX Check](https://convradar.com/page-speed) | Google PageSpeed score plus a conversion-UX read of the page, in about 30 seconds. | No login |
+| [📊 Conversion Audit](https://convradar.com/free-audit) | Connect GA4 and get an audit of your real traffic: ranked leaks with the numbers behind each and a prioritized fix list. | Free sign-up + GA4 |
+| [🩺 Page Scan](https://convradar.com/page-scan) | Paste any URL. GPT and Claude read the desktop and mobile page against our pattern library and pin each leak to the screenshot. | No login |
+| [⚡ Page Speed & UX Check](https://convradar.com/page-speed) | Google PageSpeed score, a screenshot and the design issues costing sales, in about a minute. | No login |
 | [🕹️ Benchmarks](https://convradar.com/benchmarks) | Conversion-rate ranges by industry — see where you land before chasing a number. | No login |
 | [🗣️ Voice of Customer](https://convradar.com/voice-of-customer) | Paste your URL — it mines independent customer discussion across your category (Reddit, Quora, niche forums & social threads; your brand's own reviews excluded), ranks the pains by frequency with verbatim quotes and their source links, then grades your page copy against each pain and hands you a prioritized fix list. ~3–5 min per run, report by email. | Free sign-up |
 
@@ -156,9 +157,9 @@ The OAuth flow only requests read-only GA4 access — ConvRadar can never modify
 
 ## Pricing
 
-**Free right now — ConvRadar is in open beta.** No card, no trial countdown, no usage caps. Connect GA4 and use every tool.
+**Free right now — ConvRadar is in open beta.** No card, no trial countdown. Connect GA4 and use every tool. Each account has 1,000 tool calls a day and 120 a minute, and every tool result reports how many calls are left today.
 
-When the beta ends it becomes **$9.99 / month flat** (7-day free trial, cancel anytime, no usage caps). Beta users get advance notice before that kicks in.
+When the beta ends it becomes **$9.99 / month flat** (7-day free trial, cancel anytime). Beta users get advance notice before that kicks in.
 
 ## Stack
 

@@ -64,4 +64,4 @@ also try *"Where's my biggest funnel drop?"*.
 - **`npx: command not found`** → install Node.js 18+.
 - **401 / authentication errors** → re-run the tool to retrigger the browser login, or clear the
   `mcp-remote` auth cache at `~/.mcp-auth/` and try again.
-- **Want to try before connecting GA4?** → https://convradar.com/chat (3 free messages, no signup).
+- **Want to try before connecting GA4?** → https://convradar.com/page-scan reads any URL for conversion leaks with no login and no GA4.

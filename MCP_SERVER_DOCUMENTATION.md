@@ -36,7 +36,7 @@
 
 ## 1. Architecture Overview
 
-ConvRadar is a hosted MCP server that connects to a user's Google Analytics 4 property (read-only) and exposes 32 conversion-diagnostic tools to any MCP-compatible client (Claude, ChatGPT, Cursor, Cline, MCP Inspector).
+ConvRadar is a hosted MCP server that connects to a user's Google Analytics 4 property (read-only) and exposes 35 conversion-diagnostic tools to any MCP-compatible client (Claude, ChatGPT, Cursor, Cline, MCP Inspector).
 
 **Stack:**
 - **Runtime:** Python (Starlette + FastMCP), deployed on Render
@@ -50,7 +50,7 @@ ConvRadar is a hosted MCP server that connects to a user's Google Analytics 4 pr
 **Middleware chain (order matters):**
 1. CORS (browser preflight for claude.ai/claude.com)
 2. AuthMiddleware — resolves tenant from Bearer JWT or path token (`/mcp/u_<token>`)
-3. RateLimitMiddleware — per-tenant minute/day counters
+3. RateLimitMiddleware: in-process loop guard, 600 POST/min per tenant. The per-tenant budget itself is counted per tool call inside the tool wrapper (see [Rate Limiting](#18-rate-limiting)).
 
 **Tenant isolation:** Every query is scoped to `tenant_id` + `property_id` at the data-access layer. There is no cross-tenant data leakage path.
 
@@ -95,14 +95,10 @@ All Tier 1 tools are always enabled, read-only, and return structured JSON insid
 |-----------|------|----------|-------------|
 | *(none)* | — | — | No parameters |
 
-**Returns:**
-- `property_id` — GA4 property identifier
-- `display_name` — human-readable property name
-- `website_url` — the property's primary URL (used for constructing page URLs for verification)
-- `timezone` — reporting timezone
-- `currency_code` — reporting currency
-- `industry_category` — GA4 industry
-- `vertical` — ConvRadar vertical classification (e.g. `dtc_apparel`, `saas`, `ecommerce_general`)
+**Returns:** `{property, account, website_url, currency, timezone, is_active, connected_at, data_available_from, data_available_to, business_model, has_revenue, has_purchase_data, quota}`.
+- `website_url` — site origin (`scheme://host`) derived from `page_location` data; null until page rows exist. Combine it with paths from other tools to build absolute URLs for `cr_capture_via_web_fetch`.
+- `business_model` — the detected model (e.g. `ecommerce`, `lead_generation`, `saas`). When `has_revenue` is false, revenue and AOV come back null, not 0.
+- `quota` — `{calls_left_today, day_limit, resets_at, used_today, top_tools_today}`, where `top_tools_today` lists the three tools that spent the most calls today. See [Rate Limiting](#18-rate-limiting).
 
 ---
 
@@ -115,7 +111,9 @@ All Tier 1 tools are always enabled, read-only, and return structured JSON insid
 | `date_from` | string (ISO) | No | 30 days ago | Start date |
 | `date_to` | string (ISO) | No | yesterday | End date |
 
-**Returns:** `sessions`, `total_users`, `new_users`, `engaged_sessions`, `engagement_rate`, `bounce_rate`, `avg_session_duration`, `screen_page_views_per_session`, `purchases`, `purchase_revenue`, `conversion_rate` — each with `current`, `prior`, `delta`, `delta_pct` for automatic period comparison. The prior window is the same duration immediately preceding `date_from`.
+**Returns:** `{current, previous, deltas, aov_small_sample_volatile, previous_window}`. `current` and `previous` each carry `sessions`, `engaged_sessions`, `users`, `new_users`, `revenue`, `add_to_carts`, `checkouts`, `purchases`, `key_events`, `conversion_rate`, `engagement_rate`, `aov`. `deltas` holds the relative change (0.12 = +12%) for `sessions`, `purchases`, `revenue`, `conversion_rate` and `aov`. The previous window has the same length and ends the day before `date_from`; its dates are in `previous_window`.
+
+`conversion_rate` is purchases / sessions for stores and key events / sessions for properties without a purchase event. It is null, never 0, when neither signal exists. Key events are counted against the set configured in GA4 today (see [Conversions and Key Events](#conversions-and-key-events)).
 
 **Date window:** Max 90 days. Default 30 days.
 
@@ -174,10 +172,10 @@ Sources whose source/medium is blank or `(not set)` are held **out** of the rank
 |-----------|------|----------|---------|-------------|
 | `date_from` | string (ISO) | No | 30 days ago | Start date |
 | `date_to` | string (ISO) | No | yesterday | End date |
-| `steps` | list[string] | No | auto-detect | Funnel step names (e.g. `["session_start", "view_item", "add_to_cart", "begin_checkout", "purchase"]`) |
-| `top_leaks` | int | No | 3 | How many leak points to highlight |
+| `steps` | list[string] | No | `page_view → view_item → add_to_cart → begin_checkout → purchase` | Funnel step event names; override for sites with non-standard events |
+| `top_leaks` | int | No | 4 | How many step-to-step drops to rank (max = number of transitions) |
 
-**Returns:** Ordered funnel steps with `{step_name, count, drop_rate, drop_count}` and a `leaks` array ranking the largest drop-off points by absolute volume lost. Prior-period comparison included.
+**Returns:** `{steps, biggest_leak, ranked_leaks}`. Each step is `{step, count, conversion_from_prior, drop_pct}`. Each leak is `{between, from_count, to_count, conversion_rate, drop_pct}`; `ranked_leaks` is ordered by `drop_pct`, largest relative drop first, and `biggest_leak` is its first entry. No prior-period comparison.
 
 ---
 
@@ -259,11 +257,11 @@ Values are case-insensitive for `device` and `new_vs_returning`; for `source`, p
 |-----------|------|----------|---------|-------------|
 | `date_from` | string (ISO) | No | 30 days ago | Start date |
 | `date_to` | string (ISO) | No | yesterday | End date |
-| `metrics` | list[string] | No | `["sessions", "purchases", "purchase_revenue"]` | Metrics to scan |
+| `metrics` | list[string] | No | all four | Any of `sessions`, `purchases`, `revenue`, `conversion_rate` |
 
 **Algorithm:** 28-day rolling baseline with weekly seasonality adjustment. Z-score thresholds: `|z| ≥ 2.5` = notable, `|z| ≥ 3.5` = severe. Both spikes and drops are flagged. Minimum 7 baseline points required. See [Diagnostic Engine Internals](#15-diagnostic-engine-internals).
 
-**Returns:** List of `Anomaly` objects with `{date, metric, value, baseline_mean, baseline_std, z_score, severity, direction}`. Anomalies are grouped by metric.
+**Returns:** `{findings, total_anomalies, severe_count, metrics_checked, matched_hypothesis_count}`. Each finding is a `Finding` with `kind: "anomaly"` (see [Finding Data Structure](#finding-data-structure-diagnosticfindingspy)), carrying its matched hypotheses; at most 25 are returned.
 
 **Caching:** Results can be pre-computed by a nightly cron job (`precompute_anomalies.py`); the tool falls back to live computation on cache miss.
 
@@ -280,14 +278,14 @@ Values are case-insensitive for `device` and `new_vs_returning`; for `source`, p
 | `date_from` | string (ISO) | No | 30 days ago | Start date (current window) |
 | `date_to` | string (ISO) | No | yesterday | End date (current window) |
 | `metric` | string | No | `"conversion_rate"` | Metric to diagnose: `conversion_rate`, `revenue`, `purchases` |
-| `top_n_per_dimension` | int | No | 5 | Top contributors per dimension |
+| `top_n_per_dimension` | int | No | 3 | Top contributors per dimension |
 
 **Algorithm:** For each of 4 dimensions (device_category, session_source_medium, country, landing_page):
 1. Aggregate prior and current window per segment value
 2. Compute each segment's contribution to the overall metric delta, weighted by traffic share
 3. Rank by absolute contribution (favors "where most loss came from" over "biggest relative drop")
 
-**Returns:** `{findings: [{dimension, segment, prior_metric, current_metric, delta, contribution, weight}], per_dimension_summary, matched_hypotheses}`.
+**Returns:** `{metric, top_findings, per_dimension, matched_hypothesis_count}`. `top_findings` are `Finding` objects (`kind: "segment_drop"`) ranked across all four dimensions, with `contribution` and `weight` under `extra` and matched hypotheses attached. `per_dimension` maps each dimension to `{top_contributors: [{value, delta, weight}]}`.
 
 **Hypothesis matching:** Each `Finding` (kind=`segment_drop`) is run through the matching engine.
 
@@ -302,11 +300,10 @@ Values are case-insensitive for `device` and `new_vs_returning`; for `source`, p
 | `date_from` | string (ISO) | No | 30 days ago | Start date |
 | `date_to` | string (ISO) | No | yesterday | End date |
 | `vertical` | string | No | auto-detect | Industry vertical (see [Benchmark Data](#16-benchmark-data)) |
-| `metrics` | list[string] | No | all available | Which metrics to compare |
 
-**Returns:** For each metric: `{metric, value, p25, p50, p75, percentile_band, gap_to_median, relative_to_median, source}`.
+**Returns:** `{vertical, comparisons, vertical_basis}`. Each comparison is `{metric, vertical, value, p25, p50, p75, percentile_band, gap_to_median, relative_to_median, source, confidence}`. Lead-generation properties are compared on visitor→lead rate and form completion instead of purchase metrics; self-serve SaaS gets a raw `signup_rate` block with no percentile verdict.
 
-**Percentile bands:** `below_p25`, `p25_to_p50`, `p50_to_p75`, `above_p75`.
+**Percentile bands:** `below_p25`, `p25_to_p50`, `p50_to_p75`, `above_p75`, and `median_only` for low-confidence verticals that publish a median only (`p25`/`p75` null).
 
 ---
 
@@ -318,10 +315,11 @@ Values are case-insensitive for `device` and `new_vs_returning`; for `source`, p
 |-----------|------|----------|---------|-------------|
 | `date_from` | string (ISO) | No | 30 days ago | Start date |
 | `date_to` | string (ISO) | No | yesterday | End date |
+| `top_n_sources` | int | No | 8 | How many top sources by volume to monitor (max 25) |
 
-**Returns:** Two types of findings:
-- `traffic_anomaly` — a specific source/medium had a statistically significant spike or drop in sessions
-- `mix_shift` — the share of traffic from a source/medium changed significantly (e.g., paid traffic went from 20% to 40% of total)
+**Returns:** `{anomalies, mix_changes, top_sources_monitored, matched_hypothesis_count}`.
+- `anomalies` — `Finding` objects with `kind: "traffic_anomaly"`: one source/medium had a statistically significant spike or drop in daily sessions
+- `mix_changes` — `Finding` objects with `kind: "mix_shift"`: a source's share of total traffic moved (e.g. paid went from 20% to 40% of sessions)
 
 Each finding includes hypothesis matches.
 
@@ -337,11 +335,14 @@ Each finding includes hypothesis matches.
 |-----------|------|----------|-------------|
 | *(none)* | — | — | No parameters |
 
-**Returns:** List of fact tables with their grain columns (dimensions) and metric columns. Each entry includes:
-- `fact_table` — table name (e.g. `ga4_fact_traffic_daily`, `ga4_fact_geo_daily`)
-- `grain_columns` — dimensions available for grouping
-- `metric_columns` — metrics available for aggregation
-- `dimension_filter` — if the table is restricted to specific event names or values
+**Returns:** `{business_model, key_events_now, key_events_first_seen, fact_tables, event_names, events, date_window}`.
+- `business_model` — `{primary_model, has_revenue, has_purchase_data, tracking_state, guidance}`
+- `key_events_now` — the key events configured in the GA4 property today (read from the GA4 Admin API at sync). Absent until the first read.
+- `key_events_first_seen` — first date any of those events fired. Before it, conversions read 0 because they were untracked, not because nothing converted.
+- `fact_tables` — one entry per table: `{fact_table, display_name, description, dimensions, metrics, optional_metrics}`
+- `event_names` — every distinct event name in the window
+- `events` — role detail for the events that drive conversion; `key_event: true` marks an event in today's key-event set, `key_event_before: true` marks one GA4 counted as a key event inside the window that is no longer configured
+- `date_window` — `{min_date, max_date}` of stored data
 
 **Use case:** Call this before `cr_query_metrics` to discover what's queryable.
 
@@ -360,8 +361,9 @@ Each finding includes hypothesis matches.
 | `filters` | dict | No | none | `{dimension: value}` pairs to filter before aggregation |
 | `top_n` | int | No | 25 | Max rows to return after grouping (1–100) |
 | `sort_by` | string | No | first metric | Metric to sort by (descending) |
+| `table` | string | No | auto | Fact table to query (e.g. `ga4_fact_funnel_daily`); valid names come from `cr_describe_data`. An unknown name is rejected, never substituted |
 
-**Fact table selection:** The tool automatically picks the smallest-grain fact table that covers all requested dimensions AND metrics. Prefers unfiltered tables over filtered ones.
+**Fact table selection:** Unless `table` is given, the tool automatically picks the smallest-grain fact table that covers all requested dimensions AND metrics. Prefers unfiltered tables over filtered ones.
 
 **Aggregation:** Additive metrics are summed; ratio metrics (conversion_rate, bounce_rate, engagement_rate, etc.) are weighted-averaged by their natural denominator (e.g., conversion_rate weighted by sessions).
 
@@ -591,7 +593,7 @@ Wait `retry_after_s`, then poll `cr_get_heuristic_check(request_id)` every ~15s 
 
 ## 10. Tools — User-State Writes (Gated)
 
-These tools are gated behind `MCP_ENABLE_WRITE_TOOLS=true` (default: off). They modify user state (hypotheses, change journal, verifications) — never the GA4 property itself. **Currently enabled in production** during the open beta, so connected clients see the full 35-tool surface.
+These tools are gated behind `MCP_ENABLE_WRITE_TOOLS=true` (default: off). They modify user state (hypotheses, change journal, verifications) — never the GA4 property itself. **Currently enabled in production** during the open beta, so connected clients see the full 35-tool surface. `cr_list_changes` is documented here with the diary tools but is read-only and always on.
 
 ### `cr_record_verification`
 
@@ -602,13 +604,14 @@ These tools are gated behind `MCP_ENABLE_WRITE_TOOLS=true` (default: off). They 
 | `capture_set_id` | string | **Yes** | — | Capture batch ID |
 | `url` | string | **Yes** | — | URL that was verified |
 | `observables_extracted` | dict | **Yes** | — | `{observable_key: value}` pairs |
-| `method` | string | No | `"user_screenshot"` | One of: `web_fetch`, `user_screenshot`, `claude_browser`, `cached`, `web_search`, `ga4_facts` |
+| `method` | string | No | `"user_screenshot"` | One of: `web_fetch`, `user_screenshot`, `claude_browser`, `cached`, `web_search`, `ga4_facts`, `screenshot` |
 | `quality` | string | No | `"complete"` | One of: `complete`, `partial`, `failed`, `insufficient` |
 | `notes` | string | No | — | Free-form notes |
+| `screenshot_id` | string | No | — | With `method='screenshot'`: the `screenshot_id` from `cr_get_screenshots` the verdict was read off, attached as durable evidence |
 
 **Behaviour:** For each hypothesis using this capture_set, applies conclusion_rules to observables → produces a verdict (`confirmed`, `rejected`, `rejected_with_note`, `inconclusive`) → upserts `user_hypotheses` row.
 
-**Returns:** `{verification_id, verdicts: {hypothesis_id: {title, verdict, severity, message, missing_observables}}, confirmed_count, rejected_count}`.
+**Returns:** `{verification_id, url, method, quality, verdicts: {hypothesis_id: {title, verdict, severity, message, missing_observables}}, evaluated_count, confirmed_count, rejected_count, next_step}`.
 
 ---
 
@@ -646,10 +649,14 @@ These tools are gated behind `MCP_ENABLE_WRITE_TOOLS=true` (default: off). They 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `description` | string | **Yes** | — | What was changed |
-| `change_type` | string | **Yes** | — | One of: `design`, `copy`, `pricing`, `flow`, `infrastructure`, `experiment`, `other` |
+| `change_type` | string | **Yes** | — | One of: `design`, `copy`, `pricing`, `flow`, `infrastructure`, `experiment`, `marketing`, `product`, `content`, `other` |
 | `affected_segment` | string | No | sitewide | e.g. `"mobile-checkout"` |
 | `hypothesis_id` | string | No | — | Link to the hypothesis being tested |
 | `deployed_at` | string (ISO) | No | now | When the change went live |
+
+**Returns:** `{change_id, description, change_type, affected_segment, hypothesis_id, deployed_at, measurability}`.
+
+**Measurability:** every entry is classified when written. `measurable` (a real, attributable change) and `vague` (a real change with too little detail, e.g. "updated the homepage") get the full loop: other tools annotate metric moves with them, and impact is verified at 14 days. `not_a_change` (a question, an observation such as "conversion is down", or nonsense) stays on the timeline but is never verified, emailed or used to explain a metric move. Nothing the user writes is rejected.
 
 ---
 
@@ -668,7 +675,39 @@ These tools are gated behind `MCP_ENABLE_WRITE_TOOLS=true` (default: off). They 
 - Two-proportion z-test on conversion_rate
 - Verdict: `improved` (p < 0.05, z > 0), `regressed` (p < 0.05, z < 0), `no_change`, `insufficient_data`
 
-**Returns:** `{pre: {sessions, purchases, revenue, conversion_rate}, post: {...}, deltas: {...}, z_score, p_value, verdict}`.
+**Returns:** `{change, pre: {sessions, purchases, revenue, conversion_rate}, post: {...}, deltas: {...}, z_score, p_value, verdict}`. When either window has too little data the response carries `{change, pre, post, verdict: "insufficient_data"}`.
+
+---
+
+### `cr_update_change`
+
+**Purpose:** Edit or dismiss a diary entry: fix a wrong description, category, segment or go-live date, or take a mistaken or duplicate entry out of the impact loop. Dismissed entries stay on the timeline; nothing is deleted.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `change_id` | string | **Yes** | — | ID from `cr_log_change` or `cr_list_changes` |
+| `description` | string | No | — | New description; omit to leave unchanged |
+| `change_type` | string | No | — | New category, same values as `cr_log_change`; omit to leave unchanged |
+| `affected_segment` | string | No | — | New target segment (e.g. `"mobile-checkout"`); omit to leave unchanged |
+| `deployed_at` | string (ISO) | No | — | Corrected go-live date. Changing it clears any prior verdict and re-opens the entry for a fresh 14-day measurement |
+| `dismiss` | bool | No | `false` | `true` keeps the entry visible but excludes it from impact verification, emails and metric explanations |
+
+**Returns:** `{change_id, description, change_type, affected_segment, deployed_at, status, measurability, verdict_reset}`. `verdict_reset` is true when a date change cleared an earlier verdict.
+
+---
+
+### `cr_list_changes`
+
+**Purpose:** Read the change diary: what shipped and when, with impact verdicts where measured. Call it before attributing any metric move to a cause. Entries come from `cr_log_change`, the web diary, audits and detectors. Read-only and always on, outside the `MCP_ENABLE_WRITE_TOOLS` gate.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `days` | int | No | 90 | How many days back to list (max 365) |
+| `change_type` | string | No | all | Filter to one category (same values as `cr_log_change`) |
+| `limit` | int | No | 20 | Max entries (max 50) |
+| `include_dismissed` | bool | No | `false` | Include dismissed entries |
+
+**Returns:** `{changes, total}`. Each change is `{change_id, description, change_type, affected_segment, deployed_at, source, status, measurability, verdict, verified_at, hypothesis_id}`.
 
 ---
 
@@ -935,16 +974,30 @@ HypothesisMatch:
 
 ## 18. Rate Limiting
 
-Per-tenant, fixed-window rate limiting using Supabase counter rows.
+Each account has a budget counted per **tool call**, not per HTTP request. ChatGPT opens a session per tool call, so one call costs about three POSTs; counting POSTs charged tenants for protocol traffic.
 
 | Limit | Default | Configurable via |
 |-------|---------|-----------------|
-| Per minute | 60 | `MCP_RATE_LIMIT_PER_MINUTE` |
-| Per day | 1,000 | `MCP_RATE_LIMIT_PER_DAY` |
+| Tool calls per minute | 120 | `MCP_TOOL_LIMIT_PER_MINUTE` |
+| Tool calls per day (resets 00:00 UTC) | 1,000 | `MCP_TOOL_LIMIT_PER_DAY` |
+| Transport loop guard, POST per minute | 600 | `MCP_TRANSPORT_LIMIT_PER_MINUTE` |
 
-Set either to `0` to disable. Counter rows are cleaned up nightly (rows older than 2 days).
+The budget is fixed-window, kept in Supabase counter rows (scope `tool`), and checked inside the tool wrapper. A request the budget rejects does not spend it. Counter rows are cleaned up nightly (rows older than 2 days).
 
-When a limit is hit, the middleware returns HTTP 429 with a `Retry-After` header.
+**When the budget is spent** the tool returns a normal result, not an HTTP 429 or a tool error, so the model reads the reset time and stops instead of retrying:
+
+```json
+{
+  "status": "rate_limited",
+  "summary": "ConvRadar daily budget used: 1000 of 1000 tool calls. Resets 2026-09-21 00:00 UTC (in 3 h 12 min). ...",
+  "data": {"window": "day", "used": 1000, "limit": 1000, "resets_at": "2026-09-21T00:00:00Z", "retry_after_s": 11520},
+  "notes": ["To pull history in bulk, use convradar.com/account/exports: ..."]
+}
+```
+
+Every other result carries the remaining budget in `meta.quota` (see [Response Envelope](#20-response-envelope)), and a note is added once 100 or fewer calls are left today. `cr_get_account_info` also reports calls used today and the three tools that spent the most.
+
+The transport guard is an in-process counter with no database round-trip; it only stops runaway loops and answers HTTP 429 when tripped. `MCP_TOOL_LIMIT_ENABLED=false` restores the legacy per-POST limit (`MCP_RATE_LIMIT_PER_MINUTE` 60 / `MCP_RATE_LIMIT_PER_DAY` 1,000).
 
 ---
 
@@ -975,11 +1028,14 @@ All tools return a standardized JSON envelope:
     "timezone": "America/New_York",
     "property_display_name": "My Store",
     "date_from": "2026-04-21",
-    "date_to": "2026-05-20"
+    "date_to": "2026-05-20",
+    "quota": {"calls_left_today": 958, "day_limit": 1000, "resets_at": "2026-05-21T00:00:00Z"}
   },
   "notes": ["Optional caveats or context."]
 }
 ```
+
+`meta.quota` is attached to every result that has a `meta` block while the tool budget is on. A spent budget replaces the result with the `rate_limited` shape in [Rate Limiting](#18-rate-limiting).
 
 Empty results use `empty_response()` which returns `{"summary": "...", "data": {"items": []}, "meta": {...}, "notes": [...]}` with a human-readable reason.
 
@@ -988,7 +1044,7 @@ Empty results use `empty_response()` which returns `{"summary": "...", "data": {
 ## 21. Operational Notes
 
 ### Date Window Defaults
-- Default: last 30 days (yesterday inclusive)
+- Default: 30 days ending at the property's latest available data date (GA4 processing lags, so usually yesterday or the day before)
 - Maximum: 90 days
 - Prior period: same duration immediately before `date_from`
 
@@ -998,6 +1054,11 @@ GA4 data is synced nightly by a background worker into `ga4_fact_*` tables. The 
 - No GA4 API quota concerns during tool calls
 - Queries are fast (Supabase PostgreSQL, not API round-trips)
 
+### Conversions and Key Events
+Since 2026-09-15 conversions count only the key events configured in the GA4 property **today**. At the start of every sync the worker reads the property's key-event list from the GA4 Admin API and stores it; a change to the list is written to the change diary as a system entry. The daily key-event count for every day of history is then the event count of exactly that set, so one definition runs across the whole window.
+
+GA4 itself stamps key events at collection time, so its stored daily totals keep events that were key events on that day. A property that cleans up its key events would otherwise show a false conversion collapse on the cleanup date. An empty set gives 0 key events, which tools report as a null conversion rate. Until the first read of a property, the stored GA4 count is used as before. A failed read keeps the last stored set.
+
 ### Environment Variables (Key)
 | Variable | Purpose |
 |----------|---------|
@@ -1006,9 +1067,12 @@ GA4 data is synced nightly by a background worker into `ga4_fact_*` tables. The 
 | `SUPABASE_JWT_SECRET` | Verifies legacy HS256 JWTs |
 | `MCP_OAUTH_ISSUER` | OAuth 2.1 issuer URL (default: `https://mcp.convradar.com`) |
 | `MCP_INTERNAL_SECRET` | Protects server-to-server endpoints |
-| `MCP_ENABLE_WRITE_TOOLS` | Gate for user-state write tools (default: `false`) |
-| `MCP_RATE_LIMIT_PER_MINUTE` | Per-tenant rate limit (default: 60) |
-| `MCP_RATE_LIMIT_PER_DAY` | Per-tenant rate limit (default: 1000) |
+| `MCP_ENABLE_WRITE_TOOLS` | Gate for user-state write tools (code default `false`; `true` in production) |
+| `MCP_TOOL_LIMIT_ENABLED` | Per-tool-call budget (default: `true`); `false` falls back to the legacy per-POST limit |
+| `MCP_TOOL_LIMIT_PER_MINUTE` / `MCP_TOOL_LIMIT_PER_DAY` | Tool calls per tenant (defaults: 120 / 1000) |
+| `MCP_TRANSPORT_LIMIT_PER_MINUTE` | In-process POST loop guard (default: 600) |
+| `MCP_RATE_LIMIT_PER_MINUTE` / `MCP_RATE_LIMIT_PER_DAY` | Legacy per-POST limit, used only when the tool budget is off (defaults: 60 / 1000) |
+| `LIVE_KEY_EVENTS` / `KEY_EVENTS_FROM_LIVE_SET` | Kill switches for the live key-event read and for counting conversions from it (set `0` to disable) |
 | `MCP_AUDIT_LOG_ENABLED` | Toggle audit logging (default: `true`) |
 | `PAGESPEED_API_KEY` | Google PageSpeed Insights key — enables `cr_check_page_speed` and the speed half of `cr_heuristic_check` |
 | `PAGESPEED_DAILY_BUDGET` | Daily cap on live PSI measurements |
@@ -1033,4 +1097,4 @@ The streamable HTTP transport rejects requests whose `Host` header isn't in the 
 
 ---
 
-*Last updated: 2026-07-16. Source: ConvRadar MCP server codebase analysis.*
+*Last updated: 2026-09-20. Checked against the live server card (`/.well-known/mcp/server-card.json`, server 1.4.0, 35 tools) and the server code.*
