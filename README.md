@@ -157,7 +157,7 @@ The OAuth flow only requests read-only GA4 access — ConvRadar can never modify
 
 ## Pricing
 
-**Free right now — ConvRadar is in open beta.** No card, no trial countdown. Connect GA4 and use every tool. Each account has 1,000 tool calls a day and 120 a minute, and every tool result reports how many calls are left today.
+**Free right now — ConvRadar is in open beta.** No card, no trial countdown. Connect GA4 and use every tool. Each account has 1,000 tool calls a day, and every tool result reports how many are left.
 
 When the beta ends it becomes **$9.99 / month flat** (7-day free trial, cancel anytime). Beta users get advance notice before that kicks in.
 
