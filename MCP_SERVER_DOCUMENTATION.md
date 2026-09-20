@@ -18,7 +18,7 @@
 6. [Tools — Traffic Quality Assessment](#6-tools--traffic-quality-assessment)
 7. [Tools — Hypothesis Library (Tier 3)](#7-tools--hypothesis-library-tier-3)
 8. [Tools — Verification, Web Fetch & Visual Proof](#8-tools--verification-web-fetch--visual-proof)
-9. [Tools — Page Speed & UX Checks](#9-tools--page-speed--ux-checks)
+9. [Tools — Page, UX & Voice of Customer](#9-tools--page-ux--voice-of-customer)
 10. [Tools — User-State Writes (Gated)](#10-tools--user-state-writes-gated)
 11. [Tools — Cross-Session Continuity](#11-tools--cross-session-continuity)
 12. [Tools — Full Audit (Golden First-Run)](#12-tools--full-audit-golden-first-run)
@@ -36,7 +36,7 @@
 
 ## 1. Architecture Overview
 
-ConvRadar is a hosted MCP server that connects to a user's Google Analytics 4 property (read-only) and exposes 35 conversion-diagnostic tools to any MCP-compatible client (Claude, ChatGPT, Cursor, Cline, MCP Inspector).
+ConvRadar is a hosted MCP server that connects to a user's Google Analytics 4 property (read-only) and exposes 39 conversion-diagnostic tools to any MCP-compatible client (Claude, ChatGPT, Cursor, Cline, MCP Inspector).
 
 **Stack:**
 - **Runtime:** Python (Starlette + FastMCP), deployed on Render
@@ -371,6 +371,37 @@ Each finding includes hypothesis matches.
 
 ---
 
+### `cr_export_facts`
+
+**Purpose:** The bulk form of `cr_query_metrics`: write the stored rows of one fact table to CSV instead of paging 100 rows a call. Up to 400 days and 2,000,000 rows per export, one or more gzip files per month. With `compare_property_id` it instead compares two properties after a GA4 migration, event by event.
+
+**ASYNCHRONOUS.** Returns `{status, request_id, retry_after_s}` at once and writes the files in the background. Poll `cr_get_export`. Gated behind `MCP_ENABLE_EXPORT_TOOLS`.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `date_from` | string (ISO) | **Yes** | — | Inclusive start date; one export covers up to 400 days |
+| `date_to` | string (ISO) | **Yes** | — | Inclusive end date, not in the future |
+| `table` | string | No | — | Fact table to export, e.g. `ga4_fact_event_daily`. `cr_describe_data` lists them. Ignored with `compare_property_id` |
+| `columns` | list[string] | No | every column | Columns to include; `date` is always included |
+| `property_id` | string | No | the connected property | Any GA4 property connected to the account |
+| `compare_property_id` | string | No | — | The new property after a migration; `property_id` is then the old one |
+
+**Idempotency and resume:** the same arguments on the same UTC day return the same export. A table export that stopped continues from its last finished month, because a month enters `parts` only once all of its files are uploaded; a stopped comparison runs again.
+
+---
+
+### `cr_get_export`
+
+**Purpose:** Fetch an export by `request_id`: progress while it runs, then the per-month download links. Give the user the links rather than reading the rows into the conversation.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `request_id` | string | **Yes** | ID from `cr_export_facts` |
+
+**Returns:** status, the months finished so far, and signed download URLs for the files in the private `exports` bucket, plus a manifest written last.
+
+---
+
 ## 6. Tools — Traffic Quality Assessment
 
 ### `cr_assess_traffic_quality`
@@ -529,7 +560,7 @@ If no results, returns `available_categories` so the client can retry with a val
 
 ---
 
-## 9. Tools — Page Speed & UX Checks
+## 9. Tools — Page, UX & Voice of Customer
 
 Both tools measure the **live public site**, so they are exempt from the data-import gate — they work for brand-new tenants whose GA4 backfill is still running, and for app-only properties (pass the marketing-site URL).
 
@@ -588,6 +619,34 @@ Wait `retry_after_s`, then poll `cr_get_heuristic_check(request_id)` every ~15s 
 | `request_id` | string | **Yes** | ID from `cr_heuristic_check` |
 
 **Statuses:** `checking` (retry in ~15s) → `complete` → or `failed`. A completed report carries the top-line verdict, the ranked `fix_order` with an effort label per fix, per-page measured speed (`perf_score`, `lcp_s`, `cls`, `tbt_ms`, resource weights and request counts, with `data_source` naming field vs lab), the hedged "likely issues" with grounded fixes, the free-form AI page review, the mobile-vs-desktop conversion-cost ceiling where GA4 supports one, and a shareable `report_url` the user can reopen any time.
+
+---
+
+### `cr_voice_of_customer`
+
+**Purpose:** Mine independent customer discussion across the property's category (forums, Q&A sites, social threads; the brand's own reviews are excluded), rank the pains by how often they come up, and grade the page copy against each one. Gated behind `MCP_ENABLE_VOC_TOOL`.
+
+**ASYNCHRONOUS.** Acknowledges in about two seconds with `{status, request_id, retry_after_s: 30}`; the run takes 3–6 minutes. Poll `cr_get_voice_of_customer`.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `url` | string | No | the property's site origin | Page to grade the customer pains against |
+
+**One run per account per week.** The limit is a partial unique index on `voc_runs`, not a counter, so a race cannot beat it. A failed run frees the slot. A run already in flight for the same URL is returned as-is and costs nothing. When the slot is spent the response says when the next one opens and points at the previous report.
+
+**Statuses:** `queued` → `researching` → `complete`, or `failed`. The user is emailed when the report is ready, because a 3–6 minute poll usually outlives the chat that started it.
+
+---
+
+### `cr_get_voice_of_customer`
+
+**Purpose:** Fetch a Voice of Customer run by `request_id`.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `request_id` | string | **Yes** | ID from `cr_voice_of_customer` |
+
+**Returns:** the top five pains with one verbatim quote each and their sources, the top five recommended copy changes, a fidelity header that flags a low-confidence run, and the report URL. The full web report runs to about 26 KB, so the connector response is shaped down to under 8 KB against the 12 KB envelope cap.
 
 ---
 

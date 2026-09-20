@@ -28,7 +28,7 @@ traffic-quality verdict in ChatGPT. Full set with paired prompts in [`media/`](m
 
 ## What ConvRadar does
 
-ConvRadar is a hosted Model Context Protocol (MCP) server. It connects to your Google Analytics 4 property over OAuth (read-only) and exposes 35 conversion-diagnostic tools to any MCP client.
+ConvRadar is a hosted Model Context Protocol (MCP) server. It connects to your Google Analytics 4 property over OAuth (read-only) and exposes 39 conversion-diagnostic tools to any MCP client.
 
 - Runs a **full audit on demand** — funnel drops, traffic-quality regressions, device gaps, landing-page leaks, product/category performance.
 - Compares **segments, periods and benchmarks**. Answers in plain English with GA4 numbers attached.
@@ -115,6 +115,8 @@ ConvRadar exposes the following tools. The MCP client picks the right one for ea
 | `cr_get_product_analysis` | Product-level revenue and funnel drop-off. |
 | `cr_get_product_performance` | Per-product views / add-to-cart / purchases. |
 | `cr_query_metrics` | Ad-hoc metric and dimension query against GA4. |
+| `cr_export_facts` | Export the stored rows of a fact table as CSV, one or more files per month, up to 400 days. |
+| `cr_get_export` | Fetch a running export by request id: progress, then the download links. |
 | `cr_describe_data` | Plain-English summary of a dataset slice. |
 | `cr_compare_segments` | Compare two GA4 segments side by side. |
 | `cr_compare_to_benchmark` | Compare a metric to industry or cohort benchmark. |
@@ -135,6 +137,8 @@ ConvRadar exposes the following tools. The MCP client picks the right one for ea
 | `cr_list_changes` | The change diary: what shipped and when, with impact verdicts where measured. |
 | `cr_update_change` | Edit or dismiss a diary entry — dismissed rows are retained, never deleted. |
 | `cr_verify_change_impact` | Pre/post statistical verdict for a logged change. |
+| `cr_voice_of_customer` | Mine independent customer discussion in your category and grade your page copy against the pains it finds. One run per account per week. |
+| `cr_get_voice_of_customer` | Fetch a finished Voice of Customer run: ranked pains, their sources, and the copy gaps. |
 
 ## First prompts to try
 
