@@ -631,6 +631,9 @@ Wait `retry_after_s`, then poll `cr_get_heuristic_check(request_id)` every ~15s 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `url` | string | No | the property's site origin | Page to grade the customer pains against |
+| `confirm` | bool | No | `false` | `false` starts nothing and returns the quote; `true` starts the run |
+
+**The user starts the run, not the model.** A run spends the account's single weekly slot, so the tool asks for it out loud: called with `confirm=false` it writes nothing and returns `{status: "confirmation_required", url, cost, duration, next_step}` for the client to put in front of the user. Only `confirm=true` reaches the engine. The same rule is in the tool description a model reads when it picks a tool: never call it inside an audit or a page review that the user did not ask for.
 
 **One run per account per week.** The limit is a partial unique index on `voc_runs`, not a counter, so a race cannot beat it. A failed run frees the slot. A run already in flight for the same URL is returned as-is and costs nothing. When the slot is spent the response says when the next one opens and points at the previous report.
 
