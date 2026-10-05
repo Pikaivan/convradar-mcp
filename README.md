@@ -90,9 +90,9 @@ Add a **Custom Connector** in Settings → Connectors:
 - **URL:** `https://mcp.convradar.com/mcp`
 - **Auth:** OAuth 2.1 (handled automatically)
 
-### ChatGPT (Plus / Pro)
+### ChatGPT (any plan)
 
-Add a **Custom MCP Connector** in Settings → Connectors with URL `https://mcp.convradar.com/mcp`.
+ConvRadar is an official plugin in ChatGPT's plugin directory: [open ConvRadar in ChatGPT](https://chatgpt.com/plugins/plugin_asdk_app_6a006bea18648191a3a8512c25d445ba), click **Connect** and sign in with Google. No Developer Mode, no URL to paste.
 
 ## Tools
 
