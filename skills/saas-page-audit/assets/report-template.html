@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{PAGE_NAME}} Page Audit</title>
+<style>
+
+
+:root{
+  --ground:#EFE8DA; --panel:#FCF9F3; --panel-2:#F5EEE1;
+  --ink:#231F17; --ink-2:#4A4335; --ink-3:#6E6555;
+  --rule:#DBD1BE; --rule-2:#E9E1D2;
+  --accent:#175A64; --accent-soft:#DCE9E7;
+  --critical:#A8202A; --critical-soft:#F3DFDA;
+  --warn:#8A5C0E; --warn-soft:#F0E2C4;
+  --good:#2A6547; --good-soft:#DDE8D8;
+  --pane-clear:#DCE8DA; --pane-frost:#EEE0C2; --pane-block:#F1DBD6;
+  --display:"Iowan Old Style",Charter,Cambria,"Palatino Linotype",Palatino,Georgia,serif;
+  --body:"Avenir Next",Avenir,Corbel,"Segoe UI",system-ui,-apple-system,sans-serif;
+  --data:"SF Mono","JetBrains Mono","Cascadia Mono",Consolas,ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+  --ground:#16130E; --panel:#1F1B15; --panel-2:#28231A;
+    --ink:#EFE8DA; --ink-2:#C4BAA6; --ink-3:#988E7D;
+    --rule:#3A3326; --rule-2:#2C2719;
+    --accent:#63B9B4; --accent-soft:#1D3B39;
+    --critical:#EE8A85; --critical-soft:#3B2320;
+    --warn:#DEAE5A; --warn-soft:#3A2F1A;
+    --good:#74C595; --good-soft:#1A3327;
+    --pane-clear:#1D3529; --pane-frost:#3A311D; --pane-block:#3E2522;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#16130E; --panel:#1F1B15; --panel-2:#28231A;
+  --ink:#EFE8DA; --ink-2:#C4BAA6; --ink-3:#988E7D;
+  --rule:#3A3326; --rule-2:#2C2719;
+  --accent:#63B9B4; --accent-soft:#1D3B39;
+  --critical:#EE8A85; --critical-soft:#3B2320;
+  --warn:#DEAE5A; --warn-soft:#3A2F1A;
+  --good:#74C595; --good-soft:#1A3327;
+  --pane-clear:#1D3529; --pane-frost:#3A311D; --pane-block:#3E2522;
+}
+:root[data-theme="light"]{
+  --ground:#EFE8DA; --panel:#FCF9F3; --panel-2:#F5EEE1;
+  --ink:#231F17; --ink-2:#4A4335; --ink-3:#6E6555;
+  --rule:#DBD1BE; --rule-2:#E9E1D2;
+  --accent:#175A64; --accent-soft:#DCE9E7;
+  --critical:#A8202A; --critical-soft:#F3DFDA;
+  --warn:#8A5C0E; --warn-soft:#F0E2C4;
+  --good:#2A6547; --good-soft:#DDE8D8;
+  --pane-clear:#DCE8DA; --pane-frost:#EEE0C2; --pane-block:#F1DBD6;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--body); font-size:17px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px; margin:0 auto; padding:0 20px 96px;}
+
+.jamb{display:grid; grid-template-columns:64px minmax(0,1fr); border-left:1px solid var(--rule);}
+.jamb-mark{position:relative; padding-top:34px; font-family:var(--data); font-size:11px; letter-spacing:.14em; color:var(--ink-3);}
+.jamb-mark::before{content:""; position:absolute; left:-1px; top:40px; width:23px; height:1px; background:var(--accent);}
+.jamb-mark span{display:block; padding-left:30px;}
+.jamb-body{padding:24px 0 0 26px; min-width:0;}
+@media (max-width:760px){
+  .jamb{grid-template-columns:1fr; border-left:none;}
+  .jamb-mark{padding-top:26px;} .jamb-mark::before{display:none} .jamb-mark span{padding-left:0}
+  .jamb-body{padding:6px 0 0 0;}
+}
+
+.masthead{padding:56px 0 34px; border-bottom:2px solid var(--ink);}
+.kicker{font-family:var(--data); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); margin:0 0 20px;}
+h1{font-family:var(--display); font-weight:600; font-size:clamp(2.1rem,5.2vw,3.5rem); line-height:1.06;
+   letter-spacing:-.015em; margin:0 0 18px; text-wrap:balance; max-width:26ch;}
+.dek{font-size:1.1rem; color:var(--ink-2); max-width:none; margin:0 0 30px;}
+.byline{display:flex; flex-wrap:wrap; gap:8px 22px; align-items:baseline;
+  font-family:var(--data); font-size:11.5px; letter-spacing:.05em; color:var(--ink-3);}
+.byline b{color:var(--ink); font-weight:600; letter-spacing:.02em;}
+
+h2{font-family:var(--display); font-weight:600; font-size:clamp(1.5rem,3vw,2rem); line-height:1.16;
+   letter-spacing:-.01em; margin:0 0 12px; text-wrap:balance;}
+h3{font-family:var(--body); font-weight:600; font-size:1.02rem; margin:36px 0 10px;}
+.lede{color:var(--ink-2); max-width:none; margin:0 0 26px; font-size:1.06rem;}
+p{max-width:none; margin:0 0 16px;}
+section{padding-bottom:54px;}
+.eyebrow{font-family:var(--data); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--accent); margin:34px 0 8px; font-weight:600;}
+
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px;
+  background:var(--rule); border:1px solid var(--rule); margin:0 0 30px;}
+.stat{background:var(--panel); padding:16px 18px 18px;}
+.stat .n{font-family:var(--data); font-size:1.62rem; font-weight:600; line-height:1.1;
+  font-variant-numeric:tabular-nums; letter-spacing:-.02em; display:block;}
+.stat .l{font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-3);
+  margin-top:7px; display:block; line-height:1.4;}
+.stat .s{font-size:13px; color:var(--ink-2); margin-top:6px; display:block; line-height:1.45;}
+.stat.hot .n{color:var(--critical)} .stat.cool .n{color:var(--accent)} .stat.good .n{color:var(--good)}
+
+.funnel{border:1px solid var(--rule); background:var(--panel); padding:24px 22px 12px; margin:0 0 14px;}
+.fstep{display:grid; grid-template-columns:minmax(150px,1.1fr) minmax(0,3fr) 132px; gap:16px; align-items:center; padding:9px 0;}
+.fstep + .fstep{border-top:1px solid var(--rule-2);}
+.fstep .name{font-size:14.5px; line-height:1.35;}
+.fstep .name em{display:block; font-style:normal; font-family:var(--data); font-size:11px; color:var(--ink-3);}
+.bar{height:19px; background:var(--panel-2); position:relative; overflow:hidden;}
+.bar i{position:absolute; inset:0 auto 0 0; background:var(--accent); display:block;}
+.bar.drop i{background:var(--critical)}
+.fstep .v{font-family:var(--data); font-size:14px; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap;}
+.fstep .v span{color:var(--ink-3); font-size:12px}
+@media (max-width:660px){ .fstep{grid-template-columns:1fr 106px} .fstep .bar{grid-column:1 / -1; order:3} }
+
+.tw{overflow-x:auto; border:1px solid var(--rule); background:var(--panel); margin:0 0 16px;}
+table{border-collapse:collapse; width:100%; min-width:640px; font-size:14.5px;}
+th,td{padding:10px 14px; text-align:left; border-bottom:1px solid var(--rule-2); vertical-align:top;}
+thead th{font-family:var(--data); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-3); font-weight:600; background:var(--panel-2); border-bottom:1px solid var(--rule); white-space:nowrap;}
+tbody tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right; font-family:var(--data); font-variant-numeric:tabular-nums; white-space:nowrap;}
+tr.hi td{background:var(--critical-soft)}
+tr.ok td{background:var(--good-soft)}
+tr.tot td{background:var(--panel-2); font-weight:600}
+.cap{font-size:15px; color:var(--ink-2); max-width:none; margin:0 0 30px; line-height:1.6;}
+.cap b{color:var(--ink)}
+
+.mono{font-family:var(--data); font-size:.92em}
+.down{color:var(--critical); font-weight:600}
+.up{color:var(--good); font-weight:600}
+
+footer{border-top:2px solid var(--ink); margin-top:26px; padding:26px 0 0;}
+.foot{display:flex; flex-wrap:wrap; gap:20px 44px; justify-content:space-between;}
+.foot div{font-size:14px; color:var(--ink-2); max-width:46ch}
+.foot b{color:var(--ink)}
+.foot .brand{font-family:var(--display); font-size:1.05rem; color:var(--ink); font-weight:600}
+a{color:var(--accent)}
+a:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.note{font-size:14.5px; color:var(--ink-2); line-height:1.6; margin:0 0 14px}
+.note b{color:var(--ink)}
+
+/* ---- mockup kit: the client's page, in the client's colours ----
+   Set the five --site-* values from the client's CSS (brand dark, call-to-action colour, page background, font). */
+.mk{--site-dark:#1F2937; --site-cta:#2563EB; --site-bg:#F5F6F8; --site-ink:#14161A; --site-font:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --pin:#0F8A52; margin:0 0 30px; font-family:var(--site-font); color:var(--site-ink)}
+.mk .site{background:#fff; border:1px solid #D9DCE3; border-radius:10px; overflow:hidden; box-shadow:0 18px 40px -26px rgba(0,0,0,.45); position:relative}
+.mk .browser{background:#E9ECF1; padding:8px 12px; display:flex; align-items:center; gap:6px; border-bottom:1px solid #D9DCE3}
+.mk .browser i{width:10px; height:10px; border-radius:50%; background:#C9CDD5; display:block}
+.mk .browser span{margin-left:12px; flex:1; background:#fff; border-radius:5px; padding:4px 10px; font-size:11px; color:#6E6555; font-family:var(--data); overflow:hidden; white-space:nowrap; text-overflow:ellipsis}
+.mk .body{background:var(--site-bg); padding:30px 26px; position:relative}
+.mk h4{font-size:24px; margin:0 0 6px; letter-spacing:-.02em; text-align:center}
+.mk .sub{text-align:center; font-size:14px; color:#4A5058; margin:0 0 20px}
+.mk .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px}
+.mk .card{background:#fff; border:1px solid #E3E6EA; border-radius:12px; padding:20px 18px; position:relative; display:flex; flex-direction:column}
+.mk .card.pop{border:2px solid var(--site-cta)}
+.mk .card .tag{position:absolute; top:-11px; left:50%; transform:translateX(-50%); background:var(--site-cta); color:#fff; font-size:11px; font-weight:700; padding:2px 10px; border-radius:10px; white-space:nowrap}
+.mk .card .name{font-weight:700; font-size:17px; margin:0 0 4px}
+.mk .card .for{font-size:13px; color:#4A5058; margin:0 0 12px}
+.mk .card .price{font-size:30px; font-weight:700; letter-spacing:-.02em}
+.mk .card .price small{font-size:13px; font-weight:500; color:#4A5058}
+.mk .card .term{font-size:12.5px; color:#4A5058; margin:2px 0 14px}
+.mk .card ul{list-style:none; padding:0; margin:0 0 14px; font-size:13px}
+.mk .card li{padding:6px 0; border-top:1px solid #EEF0F4}
+.mk .card li.open{color:var(--site-ink)} .mk .card li .ex{display:block; color:#4A5058; font-size:12px; margin-top:4px}
+.mk .card .no{font-size:12px; color:#8A5C0E; background:#FBF3E2; border-radius:4px; padding:6px 8px; margin:0 0 14px}
+.mk .btn{display:block; text-align:center; background:var(--site-cta); color:#fff; font-weight:700; font-size:14px; padding:11px 14px; border-radius:7px; margin-top:auto; text-decoration:none}
+.mk .btn.ghost{background:transparent; color:var(--site-cta); border:1px solid var(--site-cta)}
+.mk .fine{font-size:12px; color:#4A5058; text-align:center; margin-top:8px}
+.mk .strip{background:var(--site-dark); color:#fff; padding:18px 22px}
+.mk .tocbar{display:flex; gap:4px; flex-wrap:wrap; padding:10px 16px; background:#fff; border-bottom:1px solid #E3E6EA}
+.mk .tocbar span{font-size:12.5px; padding:6px 11px; border-radius:16px; color:#4A5058}
+.mk .tocbar span.on{background:var(--site-dark); color:#fff}
+.mk .pin{position:absolute; width:22px; height:22px; border-radius:50%; background:var(--pin); color:#fff; font:700 11px/22px var(--data); text-align:center; box-shadow:0 0 0 3px #fff; z-index:3}
+.mk .pin.in{position:static; display:inline-block; vertical-align:middle; margin-right:6px}
+.mk .lab{font-family:var(--data); font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; margin:0 0 8px; color:var(--ink-3)}
+.mk .lab.bad{color:var(--critical)} .mk .lab.good{color:var(--good)}
+.ba{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px; margin:0 0 30px}
+.ba .mk{margin:0}
+.mk .row{display:flex; justify-content:space-between; gap:12px; font-size:13.5px; padding:7px 0; border-top:1px solid #EEF0F4}
+.mk .row.tot{font-weight:700}
+.mk .row .bad{color:var(--critical); font-weight:700}
+@media (max-width:640px){ .mk .body{padding:22px 14px} }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="kicker">Conversion audit &middot; {{HOST_AND_PATH}}</p>
+  <h1>{{AT MOST 10 WORDS: observed friction; name the largest funnel loss only when joined cohort counts show it}}</h1>
+  <p class="dek">{{FIXES RESULT: give quantified uplift only from joined counts for the same page variant. Otherwise name the expected mechanism and the rate to measure; do not invent its current value.}}</p>
+  <p class="byline"><span>{{DATE}}</span></p>
+</header>
+
+<section class="jamb" id="s01">
+  <div class="jamb-mark"><span>01</span></div>
+  <div class="jamb-body">
+    <h2>Numbers</h2>
+    <div class="stats">
+      <!-- Funnel numbers only, up to four. "X of Y" and rates require joined counts for the same visits or users and page variant.
+           Unjoined page views or event occurrences may appear as separately labelled context, never as a funnel step or conversion rate.
+           Class "hot" on the measured loss only, "good" on measured conversions. Omit unavailable numbers. -->
+      <div class="stat"><span class="n">{{N}}</span><span class="l">Visits, 90 days</span><span class="s">{{optional context}}</span></div>
+      <div class="stat cool"><span class="n">{{N}}</span><span class="l">{{label}}</span></div>
+      <div class="stat hot"><span class="n">{{N}}</span><span class="l">{{label}}</span><span class="s">{{X of Y}}</span></div>
+      <div class="stat good"><span class="n">{{N}}</span><span class="l">{{label}}</span><span class="s">{{rate}}</span></div>
+    </div>
+    <p class="note">{{ONE LINE: measured cohort drop, or state that the step is unmeasured; mention unqualified traffic when relevant}}</p>
+  </div>
+</section>
+
+<section class="jamb" id="s02">
+  <div class="jamb-mark"><span>02</span></div>
+  <div class="jamb-body">
+    <h2>Problems</h2>
+    <div class="tw"><table>
+      <thead><tr><th>Problem</th><th>Evidence</th></tr></thead>
+      <tbody>
+        <tr class="hi"><td>{{problem in a few words}}</td><td>{{quote, price, count or position}}</td></tr>
+        <tr><td>{{...}}</td><td>{{...}}</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section class="jamb" id="s03">
+  <div class="jamb-mark"><span>03</span></div>
+  <div class="jamb-body">
+    <h2>Buyers and competitors</h2>
+    <div class="tw"><table>
+      <thead><tr><th>What buyers ask</th><th class="num">Discussions</th><th>Page</th></tr></thead>
+      <tbody>
+        <tr class="hi"><td>{{question}}</td><td class="num">{{n}} / {{N}}</td><td>{{how and where the page answers}}</td></tr>
+      </tbody>
+    </table></div>
+    <div class="tw"><table>
+      <thead><tr><th></th><th>{{Client}}</th><th>{{Competitor 1}}</th><th>{{Competitor 2}}</th><th>{{Competitor 3}}</th></tr></thead>
+      <tbody>
+        <tr><td>Entry price</td><td>{{}}</td><td>{{}}</td><td>{{}}</td><td>{{}}</td></tr>
+        <tr><td>How you start</td><td class="up">{{}}</td><td>{{}}</td><td>{{}}</td><td>{{}}</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">{{ONE LINE: where the page stands}}</p>
+  </div>
+</section>
+
+<section class="jamb" id="s04">
+  <div class="jamb-mark"><span>04</span></div>
+  <div class="jamb-body">
+    <h2>{{N in words}} fixes</h2>
+    <div class="tw"><table>
+      <thead><tr><th class="num">#</th><th>Fix</th><th>Effort</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td>{{fix, naming blocks by their on-page title}}</td><td>{{kind of work}}</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">Pin numbers in the mockups below match the fix numbers.</p>
+    <!-- Keep only the mockups your fixes need: the decision block as proposed (plan cards, offer or form), explanation text for lines you made clickable, any block you move (with a contents bar if you add one), the next step now beside proposed. -->
+
+    <h3>{{Decision block name}}</h3>
+    <div class="mk" style="--site-dark:#...; --site-cta:#...; --site-bg:#...; --site-font:...">
+      <div class="site">
+        <div class="browser"><i></i><i></i><i></i><span>{{host/path#anchor}}</span></div>
+        <div class="body">
+          <h4>{{real heading}}</h4>
+          <p class="sub">{{real or proposed subheading}}</p>
+          <div class="cards">
+            <div class="card">
+              <span class="pin" style="top:-10px;right:-10px">2</span>
+              <p class="name">{{plan}}</p><p class="for">{{who it is for}}</p>
+              <p class="price">{{$N}} <small>/mo</small></p><p class="term">{{term line}}</p>
+              <ul><li class="open">{{spec line}} &#9662;<span class="ex">{{explanation that opens on click}}</span></li></ul>
+              <p class="no">Not included: {{paid extras with prices}}</p>
+              <a class="btn">{{button}}</a><p class="fine">{{billing line}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Text for each line (fix {{n}})</h3>
+    <div class="tw"><table>
+      <thead><tr><th>Line on the card</th><th>Text that opens on click</th></tr></thead>
+      <tbody><tr><td>{{line}}</td><td>{{one sentence from the page's own specs or FAQ}}</td></tr></tbody>
+    </table></div>
+    <p class="note">{{Which values need the client.}}</p>
+
+    <h3>{{Next step}}, now and proposed</h3>
+    <div class="ba">
+      <div class="mk"><p class="lab bad">Now</p><div class="site"><div class="browser"><i></i><i></i><i></i><span>{{url}}</span></div><div class="body">
+        <div class="row"><span>{{line}}</span><span>{{$}}</span></div>
+        <div class="row"><span class="bad">{{surprise line}}</span><span class="bad">{{$}}</span></div>
+        <div class="row tot"><span>{{total}}</span><span>{{$}}</span></div>
+      </div></div></div>
+      <div class="mk"><p class="lab good">Proposed</p><div class="site"><div class="browser"><i></i><i></i><i></i><span>{{url}}</span></div><div class="body">
+        <span class="pin" style="top:10px;right:10px">3</span>
+        <div class="row"><span>{{line}}</span><span>{{$}}</span></div>
+        <div class="row tot"><span>{{total}}</span><span>{{$}}</span></div>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="jamb" id="s05">
+  <div class="jamb-mark"><span>05</span></div>
+  <div class="jamb-body">
+    <h2>Expected result</h2>
+    <!-- Show this table only when same-cohort, same-variant counts support every calculation. Otherwise replace it with one paragraph naming the value of one extra paid conversion, the metric to watch and its current value only if observed. -->
+    <div class="tw compact"><table>
+      <thead><tr><th>Per quarter</th><th class="num">Now</th><th class="num">After fixes {{1 to N}}</th></tr></thead>
+      <tbody>
+        <tr><td>{{next step}}</td><td class="num">{{n}}</td><td class="num"><b>~{{n}}</b></td></tr>
+        <tr><td>{{conversions}}</td><td class="num">{{n}}</td><td class="num"><b>~{{n}}</b></td></tr>
+        <tr><td>First-year value of extra {{conversions}}</td><td class="num">&nbsp;</td><td class="num"><b>~{{$}}</b></td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">{{Assumption: which measured cohort rate moves, from what to what, why. A/B feasibility. Before/after: weeks, metric, observed current value if available. Never assign paid value to a free trial.}}</p>
+  </div>
+</section>
+
+<footer>
+  <div class="foot">
+    <div>{{Sources and dates. $X and "to confirm" values listed here.}}</div>
+  </div>
+</footer>
+
+</div>
+</body>
+</html>
