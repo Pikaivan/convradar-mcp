@@ -64,9 +64,9 @@ The connector is the deep end. Five instruments on the site cover the shallow en
 
 ## Skills
 
-The public [skills catalog](skills/) contains the source of the **SaaS Page Audit** skill. It guides an audit of one SaaS pricing, product, subscription, hosting plan, or B2B service page and produces an HTML report. When ConvRadar is connected to the same site, the workflow can use its GA4 data; it also supports a page-only audit.
+The public [skills catalog](skills/) contains two workflows: [SaaS Page Audit](skills/saas-page-audit/SKILL.md) for one SaaS pricing, product or service page, and [E-commerce & Lead Gen Audit](skills/convradar-ecom-leadgen-audit/SKILL.md) for a whole store or service lead-generation site. Both produce an evidence-backed HTML report and use connected GA4 data when appropriate. The E-commerce & Lead Gen skill keeps separate rules for purchases and enquiries and excludes SaaS.
 
-The hosted MCP server serves the same skill files for ChatGPT plugin import. GitHub is the readable source; a plugin version receives its own snapshot during **Scan Tools**. See [the skill's instructions](skills/saas-page-audit/SKILL.md) and [the catalog index](skills/README.md).
+The hosted MCP server serves the same skill files for ChatGPT plugin import. GitHub is the readable source; a plugin version receives its own snapshot during **Scan Tools**. See [the catalog index](skills/README.md).
 
 ## Connect your client
 
