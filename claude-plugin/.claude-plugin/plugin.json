@@ -1,0 +1,16 @@
+{
+  "name": "convradar",
+  "displayName": "ConvRadar",
+  "version": "1.0.0",
+  "description": "Conversion audits for SaaS pages, ecommerce stores, and lead-generation sites using live pages and connected GA4 data.",
+  "author": {
+    "name": "ConvRadar",
+    "url": "https://convradar.com"
+  },
+  "homepage": "https://convradar.com",
+  "repository": "https://github.com/Pikaivan/convradar-mcp",
+  "icon": "./assets/icon.png",
+  "privacyPolicyUrl": "https://convradar.com/privacy",
+  "license": "MIT",
+  "keywords": ["conversion", "ga4", "cro", "audit"]
+}
