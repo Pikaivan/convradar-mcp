@@ -2,7 +2,7 @@
   "name": "convradar",
   "displayName": "ConvRadar",
   "version": "1.0.0",
-  "description": "Conversion audits for SaaS pages, ecommerce stores, and lead-generation sites using live pages and connected GA4 data.",
+  "description": "Finds where a store, lead-gen site or SaaS page loses conversions, from connected GA4 data and the live pages, and builds GA4 tracking plans.",
   "author": {
     "name": "ConvRadar",
     "url": "https://convradar.com"
@@ -12,5 +12,17 @@
   "icon": "./assets/icon.png",
   "privacyPolicyUrl": "https://convradar.com/privacy",
   "license": "MIT",
-  "keywords": ["conversion", "ga4", "cro", "audit"]
+  "keywords": [
+    "conversion",
+    "ga4",
+    "google-analytics",
+    "cro",
+    "audit",
+    "funnel",
+    "tracking-plan",
+    "ecommerce",
+    "lead-generation",
+    "saas",
+    "voice-of-customer"
+  ]
 }
