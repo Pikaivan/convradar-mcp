@@ -11,6 +11,8 @@
   "repository": "https://github.com/Pikaivan/convradar-mcp",
   "icon": "./assets/icon.svg",
   "privacyPolicyUrl": "https://convradar.com/privacy",
+  "supportUrl": "https://convradar.com/contacts",
+  "termsOfServiceUrl": "https://convradar.com/terms",
   "license": "MIT",
   "keywords": [
     "conversion",
