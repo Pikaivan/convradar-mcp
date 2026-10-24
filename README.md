@@ -62,6 +62,12 @@ The connector is the deep end. Five instruments on the site cover the shallow en
 | [🕹️ Benchmarks](https://convradar.com/benchmarks) | Conversion-rate ranges by industry — see where you land before chasing a number. | No login |
 | [🗣️ Voice of Customer](https://convradar.com/voice-of-customer) | Paste your URL — it mines independent customer discussion across your category (Reddit, Quora, niche forums & social threads; your brand's own reviews excluded), ranks the pains by frequency with verbatim quotes and their source links, then grades your page copy against each pain and hands you a prioritized fix list. ~3–5 min per run, report by email. | Free sign-up |
 
+## Skills
+
+The public [skills catalog](skills/) contains the source of the **SaaS Page Audit** skill. It guides an audit of one SaaS pricing, product, subscription, hosting plan, or B2B service page and produces an HTML report. When ConvRadar is connected to the same site, the workflow can use its GA4 data; it also supports a page-only audit.
+
+The hosted MCP server serves the same skill files for ChatGPT plugin import. GitHub is the readable source; a plugin version receives its own snapshot during **Scan Tools**. See [the skill's instructions](skills/saas-page-audit/SKILL.md) and [the catalog index](skills/README.md).
+
 ## Connect your client
 
 ConvRadar is a remote OAuth-protected MCP. Any stdio-only client (Claude Desktop, Cursor, Cline, Continue) can connect via `mcp-remote`, which handles the OAuth handshake on first run.
