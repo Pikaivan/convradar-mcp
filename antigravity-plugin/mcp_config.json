@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "convradar": {
+      "serverUrl": "https://mcp.convradar.com/mcp"
+    }
+  }
+}

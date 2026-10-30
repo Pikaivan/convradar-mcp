@@ -1,0 +1,13 @@
+interface:
+  display_name: "ConvRadar: SaaS and service page audit"
+  short_description: "One-page conversion audit of a pricing, plan or service page"
+policy:
+  products: [CHAT]
+  allow_implicit_invocation: true
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "convradar"
+      description: "ConvRadar MCP server, read access to the connected GA4 property"
+      transport: "streamable_http"
+      url: "https://mcp.convradar.com/mcp"

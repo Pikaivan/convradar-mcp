@@ -1,0 +1,32 @@
+{
+  "name": "convradar",
+  "displayName": "ConvRadar",
+  "version": "1.0.0",
+  "description": "Finds where a store, lead-gen site or SaaS page loses conversions, from connected GA4 data and the live pages, and builds GA4 tracking plans.",
+  "logo": "assets/logo.svg",
+  "suggestedPrompts": [
+    "Where does my funnel lose the most conversions this month?",
+    "Build a GA4 tracking plan for my site",
+    "Run a full conversion audit of my store"
+  ],
+  "author": {
+    "name": "ConvRadar",
+    "email": "hello@convradar.com",
+    "url": "https://convradar.com"
+  },
+  "homepage": "https://convradar.com/docs/mcp",
+  "repository": "https://github.com/Pikaivan/convradar-mcp",
+  "license": "MIT",
+  "keywords": [
+    "conversion",
+    "ga4",
+    "google-analytics",
+    "cro",
+    "audit",
+    "funnel",
+    "tracking-plan",
+    "ecommerce",
+    "lead-generation",
+    "saas"
+  ]
+}

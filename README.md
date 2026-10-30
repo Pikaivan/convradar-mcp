@@ -100,6 +100,10 @@ Add a **Custom Connector** in Settings → Connectors:
 
 ConvRadar is an official plugin in ChatGPT's plugin directory: [open ConvRadar in ChatGPT](https://chatgpt.com/plugins/plugin_asdk_app_6a006bea18648191a3a8512c25d445ba), click **Connect** and sign in with Google. No Developer Mode, no URL to paste.
 
+### Google Antigravity
+
+Install the plugin from [`antigravity-plugin/`](antigravity-plugin/): `agy plugin install ./convradar-mcp/antigravity-plugin` from a clone of this repo. It adds the remote server and both audit skills; sign-in runs over OAuth on the first call.
+
 ## Tools
 
 ConvRadar exposes the following tools. The MCP client picks the right one for each question; you don't usually call them by name.
