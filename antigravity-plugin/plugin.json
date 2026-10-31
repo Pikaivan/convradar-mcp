@@ -1,13 +1,13 @@
 {
   "name": "convradar",
   "displayName": "ConvRadar",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Finds where a store, lead-gen site or SaaS page loses conversions, from connected GA4 data and the live pages, and builds GA4 tracking plans.",
   "logo": "assets/logo.svg",
   "suggestedPrompts": [
+    "What's the biggest problem on my site right now, and what should I work on first?",
     "Where does my funnel lose the most conversions this month?",
-    "Build a GA4 tracking plan for my site",
-    "Run a full conversion audit of my store"
+    "Build a GA4 tracking plan for my site"
   ],
   "author": {
     "name": "ConvRadar",

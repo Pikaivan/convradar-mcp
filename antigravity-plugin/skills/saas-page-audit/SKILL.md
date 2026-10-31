@@ -11,6 +11,8 @@ Read `references/checks.md`, `references/data.md` and `references/writing.md` be
 
 ## 0. What you need
 
+If the `convradar_convradar` tools are missing or a call answers Unauthorized, stop and tell the user how to sign in: in the agy CLI open `/mcp`, select `convradar_convradar` and choose Authenticate; in the App or IDE open Customizations, then Installed MCP Servers, and choose Authenticate. If `convradar_convradar` is not listed in `/mcp`, agy started before the Antigravity sign-in: quit and start it again. Never edit MCP config files, call mcp.convradar.com with curl or scripts, or install `mcp-remote` to get around the sign-in.
+
 - The page URL. If the user gave none, ask for it and stop.
 - ConvRadar connected to the same site. Unless the user forbids quota use, call `cr_get_account_info` once; it consumes a daily MCP call. If `website_url` is another domain, say the page has no GA4 data in ConvRadar, run steps 2 to 6, and write section 01 from the user's numbers only. If the user forbids quota use, make zero ConvRadar calls, including account info, data description and page capture. Use previously supplied data with its dates and provenance; otherwise write a page-only audit without GA4 numbers.
 - Optional, never wait for them: heatmap numbers (scroll reach by page depth, clicks on the decision block), next-step counts if the checkout or signup is not in GA4, past tests on this page. Use them when the user gave them. If they cover another period than ConvRadar, section 01 uses the user's numbers and the ConvRadar window goes to the footer.
