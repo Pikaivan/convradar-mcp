@@ -11,6 +11,8 @@ Before the first call, read `references/data.md` and `references/resume.md`. Aft
 
 ## 0. Which audit
 
+If the `convradar_convradar` tools are missing or a call answers Unauthorized, stop and tell the user how to sign in: in the agy CLI open `/mcp`, select `convradar_convradar` and choose Authenticate; in the App or IDE open Customizations, then Installed MCP Servers, and choose Authenticate. If `convradar_convradar` is not listed in `/mcp`, agy started before the Antigravity sign-in: quit and start it again. Never edit MCP config files, call mcp.convradar.com with curl or scripts, or install `mcp-remote` to get around the sign-in.
+
 Call `cr_get_account_info` (free). Use `business_model`:
 - First check whether the business sells software or a SaaS subscription. If so, stop this skill even when `business_model` says `lead_generation` or the site has a demo form. Use the separate SaaS audit skill when available; otherwise explain that this audit does not cover SaaS.
 - `lead_generation`, or a site whose conversion is a form, a booking request, a call or a quote: follow `references/leadgen.md`.
