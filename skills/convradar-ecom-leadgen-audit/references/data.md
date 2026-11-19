@@ -15,7 +15,7 @@ All calls read-only. `cr_get_account_info` and `cr_describe_data` are free. Wind
 - An unverified conversion is not a zero conversion. If the primary event, another submit event and the confirmation page disagree, first check whether they count the same action and unit, repeated views, and the same date window. If no source can be validated, use the tracking diagnostic in `SKILL.md`; do not choose the largest count, average them, or scale device, source or landing-page event counts to a confirmation-page total.
 - Event counts by page (not landing page) exist only for store events (`table="ga4_fact_page_event_daily"`, dimension `page_path_plus_query_string`). For lead events by page use the landing page (`ga4_fact_landing_step_daily`) and say "in visits that started on the page".
 
-Core calls = the trust checks below plus the list for this kind of site (about 25 with three speed checks). Several checks can share one call: one event-vocabulary call serves the trust check, the funnel and the call-click count.
+Core calls = the trust checks below plus the list for this kind of site. Several checks can share one call: one event-vocabulary call serves the trust check, the funnel and the call-click count.
 
 ## Trust checks (always, before analysis)
 

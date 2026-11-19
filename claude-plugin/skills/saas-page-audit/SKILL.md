@@ -15,9 +15,9 @@ Read `references/checks.md`, `references/data.md` and `references/writing.md` be
 - ConvRadar connected to the same site. Unless the user forbids quota use, call `cr_get_account_info` once; it consumes a daily MCP call. If `website_url` is another domain, say the page has no GA4 data in ConvRadar, run steps 2 to 6, and write section 01 from the user's numbers only. If the user forbids quota use, make zero ConvRadar calls, including account info, data description and page capture. Use previously supplied data with its dates and provenance; otherwise write a page-only audit without GA4 numbers.
 - Optional, never wait for them: heatmap numbers (scroll reach by page depth, clicks on the decision block), next-step counts if the checkout or signup is not in GA4, past tests on this page. Use them when the user gave them. If they cover another period than ConvRadar, section 01 uses the user's numbers and the ConvRadar window goes to the footer.
 
-## 1. Page numbers (ConvRadar, 7 quota calls total; browser reads do not count)
+## 1. Page numbers (ConvRadar)
 
-Follow `references/data.md`. Period: 90 days ending `data_complete_to`. Keep the entire ConvRadar audit within seven daily-quota calls, including account info; browser page reads do not spend this quota. You need: visits that started on the page by source and by device, conversion, form and next-step events in those visits, page views of the page and of its next step, and a mobile speed check when the call budget permits.
+Follow `references/data.md`. Period: 90 days ending `data_complete_to`. There is no call count to stay under: do not stop early or skip a check to save calls. Stop calling only when a tool result has `status` `weekly_limit` or `rate_limited`; the remaining-call counts in `meta.quota` and `user_notice` are not a reason to stop. Read the page itself with the browser. You need: visits that started on the page by source and by device, conversion, form and next-step events in those visits, page views of the page and of its next step, and a mobile speed check.
 
 ## 1b. Where the loss is
 
@@ -28,7 +28,7 @@ Before any page check, locate the loss only from counts joined to the same visit
 
 ## 2. Read the page and its next step
 
-Fetch the full HTML of the page with the browser or web fetch. `cr_capture_via_web_fetch` also spends a daily ConvRadar call, so use it only when the call budget allows; prices that scripts change after load need the browser. Read all text, including tables, tabs, accordions, FAQ, footnotes and the comparison table. Then open every main call to action and read where it leads: checkout, signup, trial, booking, contact form. Run checks 1 to 6 in `references/checks.md` as you go, on the page or the next step as step 1b decided. Any claim that something is absent, unpublished, unanswered or working ("not on the page", "not published", "works"), and any count of buttons or blocks, needs a full-text search of the fetched page first. The H1 and the problem rows never state what the footer lists as "to confirm".
+Fetch the full HTML of the page with the browser or web fetch. Use `cr_capture_via_web_fetch` when the browser or web fetch cannot read the page; prices that scripts change after load need the browser. Read all text, including tables, tabs, accordions, FAQ, footnotes and the comparison table. Then open every main call to action and read where it leads: checkout, signup, trial, booking, contact form. Run checks 1 to 6 in `references/checks.md` as you go, on the page or the next step as step 1b decided. Any claim that something is absent, unpublished, unanswered or working ("not on the page", "not published", "works"), and any count of buttons or blocks, needs a full-text search of the fetched page first. The H1 and the problem rows never state what the footer lists as "to confirm".
 
 ## 3. Buyers and competitors
 

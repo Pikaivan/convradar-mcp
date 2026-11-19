@@ -30,6 +30,6 @@ Example shape (illustrative keys and counts, not a real result):
 2. Skip every `completed` call_key and use its saved result. If the report file already exists, continue editing it instead of rebuilding or replacing finished sections.
 3. For a `pending` call, inspect the visible tool history. If it has a result, save it as `completed`. If execution cannot be determined, mark it `unknown`, do not automatically repeat it, and continue any independent work. Where the unknown result is required, deliver an explicitly partial report and name the missing check; ask before a potentially duplicate paid rerun.
 4. If neither file nor visible tool history is available, recover only facts that remain in the chat. Do not invent missing values or replay the full call sequence. State that the earlier results are unavailable and request the prior report or an explicit fresh audit.
-5. Count `completed`, `pending` and `unknown` calls against the total call ceiling. A weekly quota error changes the report mode to `partial`; it is not an app interruption and retrying the same call will not restore quota.
+5. A weekly quota error changes the report mode to `partial`; it is not an app interruption and retrying the same call will not restore quota.
 
 After each logical section, save the draft HTML and update `next_step`. A short progress note in chat may repeat the next step and work-log filename, but it is not the sole checkpoint.

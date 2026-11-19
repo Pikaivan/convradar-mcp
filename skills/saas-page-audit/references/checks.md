@@ -83,7 +83,7 @@ From `data.md`: locate a drop between visits, decision block, next step and conv
 
 ## 10. Speed
 
-When quota use is allowed and the call budget permits, make one `cr_check_page_speed` call on the page or the next step selected in step 1b, mobile. A row only if the decision block or form is not usable for 4+ seconds on mobile; then the evidence is the time. If it passes, it is not mentioned. If the call fails, skip it.
+When quota use is allowed, make one `cr_check_page_speed` call on the page or the next step selected in step 1b, mobile. A row only if the decision block or form is not usable for 4+ seconds on mobile; then the evidence is the time. If it passes, it is not mentioned. If the call fails, skip it.
 
 ## Measurement
 

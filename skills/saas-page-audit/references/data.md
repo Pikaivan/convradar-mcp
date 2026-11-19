@@ -1,6 +1,6 @@
 # Page numbers from ConvRadar
 
-Seven daily-quota calls at most for the whole audit. Assume every ConvRadar MCP call consumes one, including `cr_get_account_info`, `cr_describe_data`, `cr_capture_via_web_fetch` and `cr_check_page_speed`; verify the remaining count in the account-info response. If the user forbids quota use, make zero ConvRadar calls. Prefer browser or ordinary web reads for the page and next step. Pass `date_from` and `date_to` to every dated call: the 90 days ending `data_complete_to` (or the day before `data_available_to`), never starting before `data_available_from`.
+There is no call count to stay under: do not stop early or skip a check to save calls. Stop calling only when a tool result has `status` `weekly_limit` or `rate_limited`; the remaining-call counts in `meta.quota` and `user_notice` are not a reason to stop. If a call returns a weekly limit, finish the audit from the data you have and name the rows that need more calls. If the user forbids quota use, make zero ConvRadar calls. Prefer browser or ordinary web reads for the page and next step. Pass `date_from` and `date_to` to every dated call: the 90 days ending `data_complete_to` (or the day before `data_available_to`), never starting before `data_available_from`.
 
 ## Path formats
 
@@ -19,7 +19,7 @@ Seven daily-quota calls at most for the whole audit. Assume every ConvRadar MCP 
 4. Page views and 90% scroll across visits to the page, not only landings:
    `cr_query_metrics(metrics=["screen_page_views","scrolled_users"], dimensions=["page_path"], date_from, date_to, top_n=100)`.
    The filter is ignored on this route: find the page's row in the list, the next step's row (checkout, signup or contact path) and its success page's row when they are on the same host. These are page views, not unique people or an ordered funnel. Do not call the success-to-step view ratio a completion or conversion rate.
-5. Speed when the call budget permits: `cr_check_page_speed(url="<page url>", page_type="landing")`.
+5. Speed: `cr_check_page_speed(url="<page url>", page_type="landing")`.
 6. Optional, for comparison only if a call remains: `cr_get_landing_pages(date_from, date_to, sort_by="sessions", top_n=25)`. Compare engagement only with pages of the same type (other product, plan or service pages), never with articles. `cr_describe_data` also takes one call, so substitute it for an optional call when event meaning needs checking.
 
 ## Reading the numbers
