@@ -1,7 +1,7 @@
 {
   "name": "convradar",
   "displayName": "ConvRadar",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Finds where a store, lead-gen site or SaaS page loses conversions, from connected GA4 data and the live pages, builds GA4 tracking plans, and adds missing Google Tag Manager tags that go live only when you click Publish.",
   "author": {
     "name": "ConvRadar",

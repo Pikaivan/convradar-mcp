@@ -1,3 +1,8 @@
+# Report template
+
+The HTML report starts from the document in the code block below. Copy it without the fences into a new `.html` file and fill every `{{...}}` placeholder.
+
+```html
 <!doctype html>
 <html lang="{{REPORT_LANG}}">
 <head>
@@ -108,3 +113,4 @@ footer p{max-width:none}
 </div>
 </body>
 </html>
+```

@@ -1,3 +1,8 @@
+# Report template
+
+The HTML report starts from the document in the code block below. Copy it without the fences into a new `.html` file and fill every `{{...}}` placeholder.
+
+```html
 <!doctype html>
 <html lang="en">
 <head>
@@ -330,3 +335,4 @@ a:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
 </div>
 </body>
 </html>
+```

@@ -7,7 +7,7 @@ description: Use when a user gives a SaaS product, pricing, hosting plan, subscr
 
 Goal: one HTML report about one page that a founder can act on the same day. It says where visitors stop, which statements on the page and at the next step contradict each other, what buyers ask that the page does not answer, what to change first (with mockups), and what that is worth.
 
-Read `references/checks.md`, `references/data.md` and `references/writing.md` before the first call. Build the file from `assets/report-template.html`.
+Read `references/checks.md`, `references/data.md` and `references/writing.md` before the first call. Build the file from the HTML template in `assets/report-template.md`.
 
 ## 0. What you need
 
@@ -58,6 +58,6 @@ When joined counts support the arithmetic, show per-quarter next-step and conver
 
 ## 7. Build and deliver
 
-Fill `assets/report-template.html`: title `<Page name> Page Audit`, kicker `Conversion audit · <host/path>`, H1 of at most 10 words naming where visitors stop or the biggest problem's place, no number; dek with the fixes' result. Sections: 01 Numbers (funnel numbers about the audited place only: visits, reach of the decision block, next step, conversions; site-wide numbers go in the line under the cards; a number you do not have is left out, not replaced), 02 Problems, 03 Buyers and competitors, 04 `<N>` fixes with mockups, 05 Expected result, footer with sources, dates and every `$X`. Run the final pass in `references/writing.md`. Save as `<host without www>-<page slug, "home" for />-audit.html` and give the file.
+Fill the HTML template in `assets/report-template.md`: title `<Page name> Page Audit`, kicker `Conversion audit · <host/path>`, H1 of at most 10 words naming where visitors stop or the biggest problem's place, no number; dek with the fixes' result. Sections: 01 Numbers (funnel numbers about the audited place only: visits, reach of the decision block, next step, conversions; site-wide numbers go in the line under the cards; a number you do not have is left out, not replaced), 02 Problems, 03 Buyers and competitors, 04 `<N>` fixes with mockups, 05 Expected result, footer with sources, dates and every `$X`. Run the final pass in `references/writing.md`. Save as `<host without www>-<page slug, "home" for />-audit.html` and give the file.
 
 Chat reply: three sentences at most. Where visitors stop, the first fix, the expected result. Then the file.
